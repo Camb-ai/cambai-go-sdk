@@ -199,7 +199,7 @@ Check out the `examples/` directory for complete, runnable examples:
 - `examples/basic-tts` - Basic text-to-speech example
 - `examples/text-to-audio` - Sound generation example
 - `examples/dubbing` - Video dubbing workflow
-- `examples/baseten-provider` - Using custom providers
+- `examples/baseten-provider` - Using custom hosting providers
 
 ## 🔗 Links
 
