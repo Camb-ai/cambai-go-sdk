@@ -178,26 +178,31 @@ if err != nil {
 }
 ```
 
-## Using Custom Provider
+## Using a Custom Hosting Provider
 
 For more details check this guide [Custom Cloud Providers](https://docs.camb.ai/custom-cloud-providers)
 
-### Baseten Deployment
+### Baseten Mars8-Flash
 
-Initialize the client with your API key and the specific model URL. [Baseten Provider Example](https://github.com/Camb-ai/cambai-go-sdk/blob/master/examples/baseten-provider/main.go)
+Set your environment variables and run the [Baseten Provider Example](https://github.com/Camb-ai/cambai-go-sdk/blob/master/examples/baseten-provider/main.go).
+
+Required env vars: `BASETEN_API_KEY`, `BASETEN_URL`, `BASETEN_REFERENCE_AUDIO` (public URL or base64 audio), and optionally `BASETEN_REFERENCE_LANGUAGE` (default: `en-us`).
 
 ```go
+// reference_audio can be a public URL — Baseten caches it for faster inference
 var ttsProvider provider.TtsProvider = &BasetenProvider{
-	APIKey: "your_api_key_here",
-	URL:    "your_model_url_here",
+	APIKey:            os.Getenv("BASETEN_API_KEY"),
+	URL:               os.Getenv("BASETEN_URL"),
+	ReferenceAudio:    os.Getenv("BASETEN_REFERENCE_AUDIO"),
+	ReferenceLanguage: "en-us",
 }
 
 req := &cambai.CreateStreamTtsRequestPayload{
-	Text:     "Hello from Go Custom Provider with Context options!",
+	Text:     "Hello from the Baseten Mars8-Flash custom hosting provider!",
 	Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
 }
 
-stream, err := ttsProvider.TextToSpeech.Tts(ctx, req)
+stream, err := ttsProvider.Tts(context.Background(), req)
 if err != nil {
 	fmt.Printf("Error generating speech: %v\n", err)
 	return

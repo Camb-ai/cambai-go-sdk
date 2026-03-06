@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,82 +14,48 @@ import (
 	"github.com/camb-ai/cambai-go-sdk/provider"
 )
 
-// BasetenOptionsKey is the context key for Baseten-specific options
-type BasetenOptionsKey struct{}
-
-// BasetenOptions contains parameters specific to the Baseten Mars-Pro model
-type BasetenOptions struct {
-	ReferenceAudio    string `json:"reference_audio"`
-	ReferenceLanguage string `json:"reference_language"`
-}
-
-// BasetenProvider implements the provider.TtsProvider interface for Baseten
+// BasetenProvider implements provider.TtsProvider for the Baseten Mars8-Flash model.
+// API reference: https://www.baseten.co/library/mars8-flash/
 type BasetenProvider struct {
-	APIKey string
-	URL    string
+	APIKey            string
+	URL               string
+	ReferenceAudio    string // Public URL or base64-encoded audio file
+	ReferenceLanguage string // ISO locale of the reference audio, e.g. "en-us"
 }
 
-// CreateTts is a stub to satisfy the interface.
+// CreateTts is a stub — Baseten does not support async TTS.
 func (b *BasetenProvider) CreateTts(ctx context.Context, request *cambai.CreateTtsRequestPayload) (*cambai.CreateTtsOut, error) {
-	return nil, fmt.Errorf("CreateTts (async) not supported by BasetenProvider, use Tts (stream)")
+	return nil, fmt.Errorf("Baseten custom hosting provider does not support async CreateTts; use Tts (streaming) instead")
 }
 
-// Tts implements the streaming text-to-speech using Baseten
+// Tts calls the Baseten Mars8-Flash endpoint and returns the audio as an io.Reader.
 func (b *BasetenProvider) Tts(ctx context.Context, request *cambai.CreateStreamTtsRequestPayload) (io.Reader, error) {
-	// 1. Retrieve Baseten-specific options from Context
-	opts, ok := ctx.Value(BasetenOptionsKey{}).(BasetenOptions)
-	if !ok || opts.ReferenceAudio == "" || opts.ReferenceLanguage == "" {
-		return nil, errors.New("BasetenProvider requires BasetenOptions (ReferenceAudio, ReferenceLanguage) in context")
-	}
+	// Normalise language: SDK enum is a string type, ensure lowercase ISO format.
+	langStr := strings.ToLower(strings.ReplaceAll(string(request.Language), "_", "-"))
 
-	// 2. Map Language Enum to String (Simplified mapping)
-	// In a real app, you'd map all enums. Here we handle EN-US and fallback.
-	langStr := "en-us"
-	if request.Language == cambai.CreateStreamTtsRequestPayloadLanguageEnUs {
-		langStr = "en-us"
-	} else {
-		// Fallback or attempt to cast if possible (but the enum is a string type in this SDK version?)
-		// Let's check the type. in the file view it says: type CreateStreamTtsRequestPayloadLanguage string
-		langStr = strings.ToLower(string(request.Language))
-		langStr = strings.ReplaceAll(langStr, "_", "-")
-	}
-
-	// 3. Construct Baseten Payload
+	// Build the Mars8-Flash payload.
+	// Docs: https://www.baseten.co/library/mars8-flash/
 	payload := map[string]interface{}{
 		"text":               request.Text,
-		"stream":             true,
-		"output_format":      "mp3",
 		"language":           langStr,
-		"reference_audio":    opts.ReferenceAudio,
-		"audio_ref":          opts.ReferenceAudio, // Baseten sometimes checks both
-		"reference_language": opts.ReferenceLanguage,
-		"apply_ner_nlp":      false,
+		"output_duration":    nil, // null = model infers optimal duration
+		"reference_audio":    b.ReferenceAudio,
+		"reference_language": b.ReferenceLanguage,
+		"output_format":      "flac", // flac is the default; wav also supported
+		"apply_ner_nlp":      false,  // disable NER (faster; pass pronunciation_dictionary instead)
 	}
 
-	// Map optional fields if present
-	if request.SpeechModel != nil {
-		payload["speech_model"] = string(*request.SpeechModel)
-	}
-	if request.UserInstructions != nil {
-		payload["user_instructions"] = *request.UserInstructions
-	}
-
-	// Map Inference Options
-	if request.InferenceOptions != nil {
-		if request.InferenceOptions.Temperature != nil {
-			payload["temperature"] = *request.InferenceOptions.Temperature
-		}
-	}
+	// Optional: temperature (default 1.0 — keep unless you need determinism)
+	// Optional: cfg_weight (default 4.2 — controls adherence to reference style)
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
-	// 4. Make Request
 	req, err := http.NewRequestWithContext(ctx, "POST", b.URL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Authorization", "Api-Key "+b.APIKey)
 	req.Header.Set("Content-Type", "application/json")
@@ -98,9 +63,8 @@ func (b *BasetenProvider) Tts(ctx context.Context, request *cambai.CreateStreamT
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
-	// Note: We copy to a buffer to match the io.Reader interface cleanly and avoid leaks.
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -108,72 +72,82 @@ func (b *BasetenProvider) Tts(ctx context.Context, request *cambai.CreateStreamT
 		return nil, fmt.Errorf("baseten error (%d): %s", resp.StatusCode, string(body))
 	}
 
-	// 5. Success - Read into buffer
 	var buf bytes.Buffer
-	_, err = io.Copy(&buf, resp.Body)
-	if err != nil {
-		return nil, err
+	if _, err = io.Copy(&buf, resp.Body); err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	return &buf, nil
 }
 
 func main() {
-	apiKey := os.Getenv("BASETEN_API_KEY")
-	url := os.Getenv("BASETEN_URL")
-	if url == "" {
-		url = "https://model-5qeryx53.api.baseten.co/environments/production/predict"
+	cambApiKey := os.Getenv("CAMB_API_KEY")
+	basetenApiKey := os.Getenv("BASETEN_API_KEY")
+	basetenUrl := os.Getenv("BASETEN_URL")
+	referenceAudio := os.Getenv("BASETEN_REFERENCE_AUDIO")
+	referenceLanguage := os.Getenv("BASETEN_REFERENCE_LANGUAGE")
+
+	// Loud fail for missing required env vars
+	missing := []string{}
+	if cambApiKey == "" {
+		missing = append(missing, "CAMB_API_KEY")
+	}
+	if basetenApiKey == "" {
+		missing = append(missing, "BASETEN_API_KEY")
+	}
+	if basetenUrl == "" {
+		missing = append(missing, "BASETEN_URL (your Baseten model prediction endpoint)")
+	}
+	if referenceAudio == "" {
+		missing = append(missing, "BASETEN_REFERENCE_AUDIO (public URL or base64-encoded audio file)")
 	}
 
-	if apiKey == "" {
-		fmt.Println("Please set BASETEN_API_KEY")
-	}
-
-	// Initialize our custom provider
-	var ttsProvider provider.TtsProvider = &BasetenProvider{
-		APIKey: apiKey,
-		URL:    url,
-	}
-
-	fmt.Println("Using Custom Baseten Provider via Go SDK...")
-
-	// Create a standard Camb.ai Request
-	req := &cambai.CreateStreamTtsRequestPayload{
-		Text:        "Hello from Go Custom Provider with Context options!",
-		Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
-		VoiceID:     1, // Mandatory in payload
-		SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
-	}
-
-	// Prepare Context with Baseten Options
-	dummyAudio := "UklGRi..." // shortened for brevity
-	ctx := context.WithValue(context.Background(), BasetenOptionsKey{}, BasetenOptions{
-		ReferenceAudio:    dummyAudio,
-		ReferenceLanguage: "en-us",
-	})
-
-	// Execute
-	stream, err := ttsProvider.Tts(ctx, req)
-	if err != nil {
-		if apiKey == "" {
-			fmt.Println("Skipping execution (No API Key).")
-			return
-		} else {
-			panic(err)
+	if len(missing) > 0 {
+		fmt.Fprintln(os.Stderr, "Error: Missing required environment variables:")
+		for _, v := range missing {
+			fmt.Fprintf(os.Stderr, "  - %s\n", v)
 		}
+		os.Exit(1)
 	}
 
-	// Save to file
-	outFile, err := os.Create("baseten-output.mp3")
+	// Default reference language to en-us if not set
+	if referenceLanguage == "" {
+		referenceLanguage = "en-us"
+	}
+
+	// Initialise the Baseten custom hosting provider
+	var ttsProvider provider.TtsProvider = &BasetenProvider{
+		APIKey:            basetenApiKey,
+		URL:               basetenUrl,
+		ReferenceAudio:    referenceAudio,
+		ReferenceLanguage: referenceLanguage,
+	}
+
+	fmt.Println("Generating speech via Baseten Mars8-Flash custom hosting provider...")
+
+	req := &cambai.CreateStreamTtsRequestPayload{
+		Text:     "Hello. This is speech generated via a Baseten Mars8-Flash custom hosting provider.",
+		Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+	}
+
+	stream, err := ttsProvider.Tts(context.Background(), req)
 	if err != nil {
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	outputFile := "baseten_output.flac"
+	outFile, err := os.Create(outputFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating output file: %v\n", err)
+		os.Exit(1)
 	}
 	defer outFile.Close()
 
-	_, err = io.Copy(outFile, stream)
-	if err != nil {
-		panic(err)
+	if _, err = io.Copy(outFile, stream); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing audio: %v\n", err)
+		os.Exit(1)
 	}
 
-	fmt.Println("Success! Saved to baseten-output.mp3")
+	fmt.Printf("✓ Success! Audio saved to %s\n", outputFile)
 }
