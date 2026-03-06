@@ -1,5 +1,13 @@
 # Camb.ai Go SDK
 
+<div id="top" align="center">
+
+   ![Banner](assets/banner5_720.jpg)
+   <h3>
+   <a href="https://camb.ai/"> Camb AI Website </a></h3>
+
+</div>
+
 The official Go SDK for interacting with [Camb.ai](https://camb.ai)'s powerful voice and audio generation APIs. Create expressive speech, unique voices, and rich soundscapes with idiomatic Go.
 
 ## ✨ Features
