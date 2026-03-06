@@ -22,12 +22,12 @@ func main() {
 
 	fmt.Println("Starting Dubbing Task...")
 
-	videoURL := "https://github.com/Camb-ai/cambai-python-sdk/raw/main/tests/data/test_video.mp4"
+	videoURL := "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 	resp, err := c.Dub.EndToEndDubbing(
 		context.Background(),
 		&cambai.EndToEndDubbingRequestPayload{
-			VideoURL:        videoURL, // Not a pointer
+			VideoURL:        videoURL,
 			SourceLanguage:  cambai.LanguagesEnUs,
 			TargetLanguages: []cambai.Languages{cambai.LanguagesFrFr},
 		},

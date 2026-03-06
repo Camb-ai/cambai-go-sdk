@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/camb-ai/cambai-go-sdk"
 	"github.com/camb-ai/cambai-go-sdk/client"
@@ -13,60 +12,29 @@ import (
 )
 
 func main() {
-	apiKey := os.Getenv("CAMB_API_KEY")
-	if apiKey == "" {
-		fmt.Println("Please set CAMB_API_KEY environment variable")
-		return
-	}
+	c := client.NewClient(option.WithAPIKey(os.Getenv("CAMB_API_KEY")))
 
-	c := client.NewClient(
-		option.WithAPIKey(apiKey),
-	)
+	fmt.Println("Streaming TTS...")
 
-	fmt.Println("Sending TTS request...")
-	resp, err := c.TextToSpeech.CreateTts(
+	resp, err := c.TextToSpeech.Tts(
 		context.Background(),
-		&cambai.CreateTtsRequestPayload{
-			Text:     "Hello from Go SDK!",
-			VoiceID:  20303, // Standard voice
-			Language: cambai.LanguagesEnUs,
+		&cambai.CreateStreamTtsRequestPayload{
+			Text:        "Hello from Camb AI Go SDK!",
+			VoiceID:     20303,
+			Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+			SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
+			OutputConfiguration: &cambai.StreamTtsOutputConfiguration{
+				Format: cambai.OutputFormatWav.Ptr(),
+			},
 		},
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("TTS Task Created! TaskID: %s\n", resp.TaskID)
+	out, _ := os.Create("tts_output.wav")
+	defer out.Close()
 
-	// Parse Task ID (which is returned as string from CreateTts but required as int for GetRunInfo)
-	runID, err := strconv.Atoi(resp.TaskID)
-	if err != nil {
-		panic(fmt.Errorf("failed to parse run ID: %v", err))
-	}
-
-	fmt.Printf("Polling for Run ID: %d...\n", runID)
-
-	for {
-		time.Sleep(2 * time.Second)
-		status, err := c.TextToSpeech.GetTtsRunInfo(context.Background(), &runID, &cambai.GetTtsRunInfoTtsResultRunIDGetRequest{})
-		if err != nil {
-			fmt.Printf("Error polling: %v\n", err)
-			continue
-		}
-
-		fmt.Printf("Status Response Received.\n")
-		// The status response is a union type. We check fields.
-		if status.GetTtsResultOutFileURL != nil {
-			fmt.Printf("Success! Audio URL: %s\n", status.GetTtsResultOutFileURL.OutputURL)
-			break
-		}
-
-		if status.String != "" {
-			fmt.Printf("Status: %s\n", status.String)
-			if status.String == "SUCCESS" {
-				// Wait, if it is success, we expect FileURL.
-				// Maybe the union type handling depends on actual JSON structure.
-			}
-		}
-	}
+	io.Copy(out, resp)
+	fmt.Println("✓ Success! Audio saved to tts_output.wav")
 }

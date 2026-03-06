@@ -1,4 +1,7 @@
-# Go SDK Quickstart
+---
+title: "Go SDK Quickstart"
+icon: "golang"
+---
 
 Get started with the Camb.ai Go SDK in minutes
 
@@ -54,7 +57,7 @@ func main() {
 			Text:     "Hello! Welcome to Camb.ai text-to-speech.",
 			Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
 			VoiceID:  147320,
-			SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMars8Flash.Ptr(),
+			SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
 			OutputConfiguration: &cambai.StreamTtsOutputConfiguration{
 				Format: cambai.OutputFormatWav.Ptr(),
 			},
@@ -95,48 +98,39 @@ SaveStreamToFile(stream, "output.wav")
 
 Camb.ai offers three MARS models optimized for different use cases:
 
-### MARS Flash
-
-```go
+<CodeGroup>
+```go MARS Flash
 stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
     Text:        "Fast and efficient speech synthesis.",
     Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
     VoiceID:     147320,
-    SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMars8Flash.Ptr(),
+    SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsFlash.Ptr(),
 })
+// Best for: Real-time voice agents, low-latency applications
+// Sample rate: 22.05kHz
 ```
-
-**Best for**: Real-time voice agents, low-latency applications  
-**Sample rate**: 22.05kHz
-
-### MARS Pro
-
-```go
+```go MARS Pro
 stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
     Text:        "High-fidelity audio production.",
     Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
     VoiceID:     147320,
-    SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMars8.Ptr(),
+    SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
 })
+// Best for: Audio production, high-quality content
+// Sample rate: 48kHz
 ```
-
-**Best for**: Audio production, high-quality content  
-**Sample rate**: 48kHz
-
-### MARS Instruct
-
-```go
+```go MARS Instruct
 stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
     Text:             "Great to meet you!",
     Language:         cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
     VoiceID:          147320,
-    SpeechModel:      cambai.CreateStreamTtsRequestPayloadSpeechModelMars8Instruct.Ptr(),
+    SpeechModel:      cambai.CreateStreamTtsRequestPayloadSpeechModelMarsInstruct.Ptr(),
     UserInstructions: cambai.String("Speak in a warm, friendly tone"),
 })
+// Best for: Fine-grained control over tone and style
+// Sample rate: 22.05kHz
 ```
-
-**Best for**: Fine-grained control over tone and style  
-**Sample rate**: 22.05kHz
+</CodeGroup>
 
 ## Listing Available Voices
 
@@ -210,15 +204,28 @@ if err != nil {
 }
 ```
 
+---
+
 ## Next Steps
 
-| | |
-| --- | --- |
-| **🎙️ Voice Agents** <br> Build real-time voice agents with Pipecat <br> [Learn more](/tutorials/pipecat) | **🔗 LiveKit Integration** <br> Create voice agents with LiveKit <br> [Learn more](/tutorials/livekit) |
-| **📄 API Reference** <br> Explore the full TTS API <br> [Learn more](/api-reference/endpoint/create-tts-stream) | **🔊 Voice Library** <br> Browse available voices <br> [Learn more](/api-reference/endpoint/list-voices) |
+<CardGroup cols={2}>
+  <Card title="Voice Agents" icon="/images/pipecat-orange.svg" href="/integrations/pipecat">
+    Build real-time voice agents with Pipecat
+  </Card>
+  <Card title="LiveKit Integration" icon="/images/livekit-orange.svg" href="/integrations/livekit">
+    Create voice agents with LiveKit
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/endpoint/create-tts-stream">
+    Explore the full TTS API
+  </Card>
+  <Card title="Voice Library" icon="speech" href="/api-reference/endpoint/list-voices">
+    Browse available voices
+  </Card>
+</CardGroup>
+
 
 ## Resources
 
-*   [GitHub: camb-ai/cambai-go-sdk](https://github.com/Camb-ai/cambai-go-sdk)
+*   [GitHub Repository](https://github.com/Camb-ai/cambai-go-sdk)
 *   [SDK Examples](https://github.com/Camb-ai/cambai-go-sdk/tree/master/examples)
 *   [API Reference](https://docs.camb.ai/api-reference/endpoint/create-tts-stream)

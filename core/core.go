@@ -9,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"time"
 )
 
 const (
@@ -105,7 +106,9 @@ type CallerParams struct {
 
 // NewCaller returns a new *Caller backed by the given parameters.
 func NewCaller(params *CallerParams) *Caller {
-	var httpClient HTTPClient = http.DefaultClient
+	var httpClient HTTPClient = &http.Client{
+		Timeout: 300 * time.Second,
+	}
 	if params.Client != nil {
 		httpClient = params.Client
 	}

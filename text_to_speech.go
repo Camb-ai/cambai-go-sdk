@@ -505,6 +505,9 @@ const (
 	CreateStreamTtsRequestPayloadSpeechModelMars8Instruct CreateStreamTtsRequestPayloadSpeechModel = "mars-8-instruct"
 	CreateStreamTtsRequestPayloadSpeechModelMars7         CreateStreamTtsRequestPayloadSpeechModel = "mars-7"
 	CreateStreamTtsRequestPayloadSpeechModelMars6         CreateStreamTtsRequestPayloadSpeechModel = "mars-6"
+	CreateStreamTtsRequestPayloadSpeechModelMarsPro       CreateStreamTtsRequestPayloadSpeechModel = "mars-pro"
+	CreateStreamTtsRequestPayloadSpeechModelMarsFlash     CreateStreamTtsRequestPayloadSpeechModel = "mars-flash"
+	CreateStreamTtsRequestPayloadSpeechModelMarsInstruct  CreateStreamTtsRequestPayloadSpeechModel = "mars-instruct"
 )
 
 func NewCreateStreamTtsRequestPayloadSpeechModelFromString(s string) (CreateStreamTtsRequestPayloadSpeechModel, error) {
@@ -521,6 +524,12 @@ func NewCreateStreamTtsRequestPayloadSpeechModelFromString(s string) (CreateStre
 		return CreateStreamTtsRequestPayloadSpeechModelMars7, nil
 	case "mars-6":
 		return CreateStreamTtsRequestPayloadSpeechModelMars6, nil
+	case "mars-pro":
+		return CreateStreamTtsRequestPayloadSpeechModelMarsPro, nil
+	case "mars-flash":
+		return CreateStreamTtsRequestPayloadSpeechModelMarsFlash, nil
+	case "mars-instruct":
+		return CreateStreamTtsRequestPayloadSpeechModelMarsInstruct, nil
 	}
 	var t CreateStreamTtsRequestPayloadSpeechModel
 	return "", fmt.Errorf("%s is not a valid %T", s, t)

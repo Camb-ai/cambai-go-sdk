@@ -30,16 +30,23 @@ import (
 func main() {
     c := client.NewClient(
         option.WithAPIKey(os.Getenv("CAMB_API_KEY")),
-        // option.WithBaseURL("..."), // Optional: Override Base URL
     )
 }
 ```
 
-## 🚀 Examples
+## 🚀 Getting Started: Examples
+
+### Supported Models & Sample Rates
+
+| Model Name | Sample Rate | Description |
+| :--- | :--- | :--- |
+| **mars-pro** | **48kHz** | High-fidelity, professional-grade speech synthesis. Ideal for long-form content and dubbing. |
+| **mars-instruct** | **22.05kHz** | Optimized for instruction-following and nuance control. |
+| **mars-flash** | **22.05kHz** | Low-latency model optimized for real-time applications and conversational AI. |
 
 ### 1. Text-to-Speech (TTS)
 
-Generate audio from text. This example creates a task and polls for completion.
+Generate and stream speech in real-time. This example uses the high-fidelity `mars-pro` model.
 
 ```go
 package main
@@ -47,9 +54,8 @@ package main
 import (
     "context"
     "fmt"
+    "io"
     "os"
-    "strconv"
-    "time"
 
     "github.com/camb-ai/cambai-go-sdk"
     "github.com/camb-ai/cambai-go-sdk/client"
@@ -59,103 +65,74 @@ import (
 func main() {
     c := client.NewClient(option.WithAPIKey(os.Getenv("CAMB_API_KEY")))
 
-    // 1. Initiate TTS Task
-    
-    // Fetch Language ID for English (United States)
-    // You can use the constants directly
-    englishID := cambai.LanguagesEnUs
+    fmt.Println("Streaming TTS...")
 
-    resp, err := c.TextToSpeech.CreateTts(
+    resp, err := c.TextToSpeech.Tts(
         context.Background(),
-        &cambai.CreateTtsRequestPayload{
-            Text:     "Hello from Camb AI Go SDK!",
-            VoiceID:  20303, // Standard Voice
-            Language: englishID,
+        &cambai.CreateStreamTtsRequestPayload{
+            Text:        "Hello from Camb AI Go SDK!",
+            VoiceID:     20303,
+            Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+            SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
+            OutputConfiguration: &cambai.StreamTtsOutputConfiguration{
+                Format: cambai.OutputFormatWav.Ptr(),
+            },
         },
     )
     if err != nil {
         panic(err)
     }
 
-    // 2. Poll for Completion
-    runID, _ := strconv.Atoi(resp.TaskID) // TaskID is returned as string
-    fmt.Printf("TTS Started. Run ID: %d\n", runID)
-
-    for {
-        time.Sleep(1 * time.Second)
-        
-        status, err := c.TextToSpeech.GetTtsRunInfo(
-            context.Background(), 
-            &runID, 
-            &cambai.GetTtsRunInfoTtsResultRunIDGetRequest{},
-        )
-        if err != nil {
-            fmt.Printf("Polling error: %v\n", err)
-            continue
-        }
-
-        // Check if we have a URL
-        if status.GetTtsResultOutFileURL != nil {
-            fmt.Printf("Success! Audio URL: %s\n", status.GetTtsResultOutFileURL.OutputURL)
-            break
-        }
-        fmt.Println("Processing...")
-    }
+    out, _ := os.Create("tts_output.wav")
+    defer out.Close()
+    
+    io.Copy(out, resp)
+    fmt.Println("✓ Success! Audio saved to tts_output.wav")
 }
 ```
 
 ### 2. End-to-End Dubbing
 
-Dub a video from one language to another.
+Dub a video from one language to another and poll for the result.
 
 ```go
+package main
+
 import (
     "context"
     "fmt"
     "time"
     "github.com/camb-ai/cambai-go-sdk"
     "github.com/camb-ai/cambai-go-sdk/client"
+    "github.com/camb-ai/cambai-go-sdk/option"
 )
 
 func main() {
-    c := client.NewClient()
+    c := client.NewClient(option.WithAPIKey(os.Getenv("CAMB_API_KEY")))
 
-    // 1. Create Dubbing Task
-    videoURL := "https://example.com/video.mp4"
-    
     resp, _ := c.Dub.EndToEndDubbing(
         context.Background(),
         &cambai.EndToEndDubbingRequestPayload{
-            VideoURL:        videoURL,
+            VideoURL:        "https://example.com/video.mp4",
             SourceLanguage:  cambai.LanguagesEnUs,
-            TargetLanguages: []cambai.Languages{cambai.LanguagesFrFr},
+            TargetLanguages: []cambai.Languages{cambai.LanguagesHiIn},
         },
     )
 
     taskID := *resp.TaskID
     fmt.Printf("Dubbing started. Task ID: %s\n", taskID)
 
-    // 2. Poll Status
     for {
         time.Sleep(5 * time.Second)
-        statusResp, _ := c.Dub.GetEndToEndDubbingStatus(
-            context.Background(), 
-            taskID, 
-            &cambai.GetEndToEndDubbingStatusDubTaskIDGetRequest{},
-        )
+        statusResp, _ := c.Dub.GetEndToEndDubbingStatus(context.Background(), taskID, nil)
         
-        fmt.Printf("Status: %s\n", statusResp.Status)
-
         if statusResp.Status == cambai.TaskStatusSuccess {
-            // Get Result
             runID := *statusResp.RunID
-            result, _ := c.Dub.GetDubbedRunInfo(
-                context.Background(), 
-                &runID, 
-                &cambai.GetDubbedRunInfoDubResultRunIDGetRequest{},
-            )
-            if result.DubbingResult != nil && result.DubbingResult.VideoURL != nil {
-                fmt.Printf("Dubbed Video: %s\n", *result.DubbingResult.VideoURL)
+            result, _ := c.Dub.GetDubbedRunInfo(context.Background(), &runID, nil)
+            
+            if result.DubbingResult != nil {
+                fmt.Printf("✓ Dubbing successful! Video URL: %s\n", *result.DubbingResult.VideoURL)
+                fmt.Printf("  Transcript: %v\n", result.DubbingResult.Transcript)
             }
             break
         } else if statusResp.Status == cambai.TaskStatusError {
@@ -166,54 +143,70 @@ func main() {
 }
 ```
 
-### 3. Text-to-Voice
+### 3. Text-to-Voice (Generative Voice)
 
-Generate a unique new voice from a description.
+Create a unique new voice from a description.
 
 ```go
 resp, _ := c.TextToVoice.CreateTextToVoice(
     context.Background(),
     &cambai.CreateTextToVoiceRequestPayload{
-        Text:             "This is a test sentence for the new voice.",
-        VoiceDescription: "A deep, resonant voice suitable for narration.",
+        Text:             "Crafting a truly unique and captivating voice.",
+        VoiceDescription: "A smooth, rich baritone voice layered with warmth.",
     },
 )
-// Poll resp.TaskID using c.TextToVoice.GetTextToVoiceStatus(...)
+
+taskID := *resp.TaskID
+fmt.Printf("Voice generation task created: %s\n", taskID)
+// Poll status using c.TextToVoice.GetTextToVoiceStatus(taskID)
 ```
 
-## ⚙️ Advanced
+### 4. Text-to-Audio (Sound Generation)
 
-### List Available Voices
+Generate sound effects from a descriptive prompt.
 
 ```go
-voices, _ := c.VoiceCloning.ListVoices(
-    context.Background(), 
-    &cambai.ListVoicesListVoicesGetRequest{},
+resp, _ := c.TextToAudio.CreateTextToAudio(
+    context.Background(),
+    &cambai.CreateTextToAudioRequestPayload{
+        Prompt:    "A gentle breeze rustling through autumn leaves.",
+        Duration:  cambai.Float64(3.0),
+        AudioType: cambai.String("sound"),
+    },
 )
 
-for _, v := range voices {
-    fmt.Printf("ID: %d, Name: %s\n", v.ID, v.VoiceName)
-}
+taskID := *resp.TaskID
+fmt.Printf("Sound task created: %s\n", taskID)
+// Poll status and get result run_id, then download using c.TextToAudio.GetTextToAudioResult(run_id)
 ```
 
-## 🛠️ Custom Providers
+## ⚙️ Advanced Usage & Other Features
 
-The Go SDK generates a concrete `Client` struct by default. To support custom providers (like Baseten) or to mock the client for testing, use the `provider` package which defines a `TtsProvider` interface.
+The Camb AI SDK offers a wide range of capabilities beyond these examples, including:
 
-```go
-import "github.com/camb-ai/cambai-go-sdk/provider"
+- Voice Cloning
+- Translated TTS
+- Audio Dubbing
+- Transcription
+- And more!
 
-// 1. Use Default Implementation
-var ttsProvider provider.TtsProvider = provider.NewDefaultProvider(os.Getenv("CAMB_API_KEY"))
+Please refer to the [Official Camb AI API Documentation](https://docs.camb.ai) for a comprehensive list of features and advanced usage patterns.
 
-// 2. Or Implement Your Own
-type MyCustomProvider struct {}
-func (m *MyCustomProvider) CreateTts(ctx context.Context, req *cambai.CreateTtsRequestPayload) (*cambai.CreateTtsOut, error) {
-    // Custom logic here (e.g. call Baseten)
-    return &cambai.CreateTtsOut{}, nil
-}
-```
+## 📖 Examples
+
+Check out the `examples/` directory for complete, runnable examples:
+
+- `examples/basic-tts` - Basic text-to-speech example
+- `examples/text-to-audio` - Sound generation example
+- `examples/dubbing` - Video dubbing workflow
+- `examples/baseten-provider` - Using custom providers
+
+## 🔗 Links
+
+- [Documentation](https://docs.camb.ai)
+- [GitHub Repository](https://github.com/Camb-ai/cambai-go-sdk)
+- [Python SDK](https://github.com/Camb-ai/cambai-python-sdk)
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details

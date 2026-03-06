@@ -67,12 +67,19 @@ func (b *BasetenProvider) Tts(ctx context.Context, request *cambai.CreateStreamT
 		"apply_ner_nlp":      false,
 	}
 
+	// Map optional fields if present
+	if request.SpeechModel != nil {
+		payload["speech_model"] = string(*request.SpeechModel)
+	}
+	if request.UserInstructions != nil {
+		payload["user_instructions"] = *request.UserInstructions
+	}
+
 	// Map Inference Options
 	if request.InferenceOptions != nil {
 		if request.InferenceOptions.Temperature != nil {
 			payload["temperature"] = *request.InferenceOptions.Temperature
 		}
-		// Map other options as needed...
 	}
 
 	payloadBytes, err := json.Marshal(payload)
@@ -93,8 +100,7 @@ func (b *BasetenProvider) Tts(ctx context.Context, request *cambai.CreateStreamT
 	if err != nil {
 		return nil, err
 	}
-	// Note: We don't close body here because we return a reader that depends on it?
-	// Actually no, we copy it to a buffer to match the io.Reader interface cleanly and avoid leaks.
+	// Note: We copy to a buffer to match the io.Reader interface cleanly and avoid leaks.
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -121,8 +127,6 @@ func main() {
 
 	if apiKey == "" {
 		fmt.Println("Please set BASETEN_API_KEY")
-		// For verification purposes inside the agent, we might not exit if no key,
-		// but let's assume user will run this.
 	}
 
 	// Initialize our custom provider
@@ -135,12 +139,13 @@ func main() {
 
 	// Create a standard Camb.ai Request
 	req := &cambai.CreateStreamTtsRequestPayload{
-		Text:     "Hello from Go Custom Provider with Context options!",
-		Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+		Text:        "Hello from Go Custom Provider with Context options!",
+		Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+		VoiceID:     1, // Mandatory in payload
+		SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
 	}
 
 	// Prepare Context with Baseten Options
-	// In a real scenario, read this from a file
 	dummyAudio := "UklGRi..." // shortened for brevity
 	ctx := context.WithValue(context.Background(), BasetenOptionsKey{}, BasetenOptions{
 		ReferenceAudio:    dummyAudio,
