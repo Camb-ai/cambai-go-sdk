@@ -55,9 +55,9 @@ type GetTtsRunInfoTtsResultRunIDGetRequest struct {
 
 type CreateStreamTtsRequestPayload struct {
 	Text                              string                                    `json:"text" url:"text"`
-	Language                          CreateStreamTtsRequestPayloadLanguage     `json:"language,omitempty" url:"language,omitempty"`
+	Language                          TtsLanguage     `json:"language,omitempty" url:"language,omitempty"`
 	VoiceID                           int                                       `json:"voice_id" url:"voice_id"`
-	SpeechModel                       *CreateStreamTtsRequestPayloadSpeechModel `json:"speech_model,omitempty" url:"speech_model,omitempty"`
+	SpeechModel                       *SpeechModel `json:"speech_model,omitempty" url:"speech_model,omitempty"`
 	UserInstructions                  *string                                   `json:"user_instructions,omitempty" url:"user_instructions,omitempty"`
 	EnhanceNamedEntitiesPronunciation *bool                                     `json:"enhance_named_entities_pronunciation,omitempty" url:"enhance_named_entities_pronunciation,omitempty"`
 	OutputConfiguration               *StreamTtsOutputConfiguration             `json:"output_configuration,omitempty" url:"output_configuration,omitempty"`
@@ -294,248 +294,248 @@ func (s *StreamTtsVoiceSettings) String() string {
 	return fmt.Sprintf("%#v", s)
 }
 
-type CreateStreamTtsRequestPayloadLanguage string
+type TtsLanguage string
 
 const (
-	CreateStreamTtsRequestPayloadLanguageArKw CreateStreamTtsRequestPayloadLanguage = "ar-kw"
-	CreateStreamTtsRequestPayloadLanguageDeCh CreateStreamTtsRequestPayloadLanguage = "de-ch"
-	CreateStreamTtsRequestPayloadLanguageKoKr CreateStreamTtsRequestPayloadLanguage = "ko-kr"
-	CreateStreamTtsRequestPayloadLanguageThTh CreateStreamTtsRequestPayloadLanguage = "th-th"
-	CreateStreamTtsRequestPayloadLanguageMlIn CreateStreamTtsRequestPayloadLanguage = "ml-in"
-	CreateStreamTtsRequestPayloadLanguagePtPt CreateStreamTtsRequestPayloadLanguage = "pt-pt"
-	CreateStreamTtsRequestPayloadLanguageKnIn CreateStreamTtsRequestPayloadLanguage = "kn-in"
-	CreateStreamTtsRequestPayloadLanguageFiFi CreateStreamTtsRequestPayloadLanguage = "fi-fi"
-	CreateStreamTtsRequestPayloadLanguageEsMx CreateStreamTtsRequestPayloadLanguage = "es-mx"
-	CreateStreamTtsRequestPayloadLanguageFrCa CreateStreamTtsRequestPayloadLanguage = "fr-ca"
-	CreateStreamTtsRequestPayloadLanguageCsCz CreateStreamTtsRequestPayloadLanguage = "cs-cz"
-	CreateStreamTtsRequestPayloadLanguagePtBr CreateStreamTtsRequestPayloadLanguage = "pt-br"
-	CreateStreamTtsRequestPayloadLanguageHiIn CreateStreamTtsRequestPayloadLanguage = "hi-in"
-	CreateStreamTtsRequestPayloadLanguageArSy CreateStreamTtsRequestPayloadLanguage = "ar-sy"
-	CreateStreamTtsRequestPayloadLanguageEsUs CreateStreamTtsRequestPayloadLanguage = "es-us"
-	CreateStreamTtsRequestPayloadLanguageBnBd CreateStreamTtsRequestPayloadLanguage = "bn-bd"
-	CreateStreamTtsRequestPayloadLanguageJaJp CreateStreamTtsRequestPayloadLanguage = "ja-jp"
-	CreateStreamTtsRequestPayloadLanguageMrIn CreateStreamTtsRequestPayloadLanguage = "mr-in"
-	CreateStreamTtsRequestPayloadLanguageArMa CreateStreamTtsRequestPayloadLanguage = "ar-ma"
-	CreateStreamTtsRequestPayloadLanguageEsEs CreateStreamTtsRequestPayloadLanguage = "es-es"
-	CreateStreamTtsRequestPayloadLanguageEnUs CreateStreamTtsRequestPayloadLanguage = "en-us"
-	CreateStreamTtsRequestPayloadLanguageZhCn CreateStreamTtsRequestPayloadLanguage = "zh-cn"
-	CreateStreamTtsRequestPayloadLanguageElGr CreateStreamTtsRequestPayloadLanguage = "el-gr"
-	CreateStreamTtsRequestPayloadLanguagePlPl CreateStreamTtsRequestPayloadLanguage = "pl-pl"
-	CreateStreamTtsRequestPayloadLanguageArOm CreateStreamTtsRequestPayloadLanguage = "ar-om"
-	CreateStreamTtsRequestPayloadLanguageFrCh CreateStreamTtsRequestPayloadLanguage = "fr-ch"
-	CreateStreamTtsRequestPayloadLanguageEnUk CreateStreamTtsRequestPayloadLanguage = "en-uk"
-	CreateStreamTtsRequestPayloadLanguageEnAu CreateStreamTtsRequestPayloadLanguage = "en-au"
-	CreateStreamTtsRequestPayloadLanguageArJo CreateStreamTtsRequestPayloadLanguage = "ar-jo"
-	CreateStreamTtsRequestPayloadLanguageArAe CreateStreamTtsRequestPayloadLanguage = "ar-ae"
-	CreateStreamTtsRequestPayloadLanguageTrTr CreateStreamTtsRequestPayloadLanguage = "tr-tr"
-	CreateStreamTtsRequestPayloadLanguageArLy CreateStreamTtsRequestPayloadLanguage = "ar-ly"
-	CreateStreamTtsRequestPayloadLanguageRuRu CreateStreamTtsRequestPayloadLanguage = "ru-ru"
-	CreateStreamTtsRequestPayloadLanguageEnIn CreateStreamTtsRequestPayloadLanguage = "en-in"
-	CreateStreamTtsRequestPayloadLanguageArYe CreateStreamTtsRequestPayloadLanguage = "ar-ye"
-	CreateStreamTtsRequestPayloadLanguageArEg CreateStreamTtsRequestPayloadLanguage = "ar-eg"
-	CreateStreamTtsRequestPayloadLanguageFrBe CreateStreamTtsRequestPayloadLanguage = "fr-be"
-	CreateStreamTtsRequestPayloadLanguageTaIn CreateStreamTtsRequestPayloadLanguage = "ta-in"
-	CreateStreamTtsRequestPayloadLanguageZhTw CreateStreamTtsRequestPayloadLanguage = "zh-tw"
-	CreateStreamTtsRequestPayloadLanguageViVn CreateStreamTtsRequestPayloadLanguage = "vi-vn"
-	CreateStreamTtsRequestPayloadLanguageBnIn CreateStreamTtsRequestPayloadLanguage = "bn-in"
-	CreateStreamTtsRequestPayloadLanguageArSa CreateStreamTtsRequestPayloadLanguage = "ar-sa"
-	CreateStreamTtsRequestPayloadLanguageDeAt CreateStreamTtsRequestPayloadLanguage = "de-at"
-	CreateStreamTtsRequestPayloadLanguagePaIn CreateStreamTtsRequestPayloadLanguage = "pa-in"
-	CreateStreamTtsRequestPayloadLanguageItIt CreateStreamTtsRequestPayloadLanguage = "it-it"
-	CreateStreamTtsRequestPayloadLanguageNlNl CreateStreamTtsRequestPayloadLanguage = "nl-nl"
-	CreateStreamTtsRequestPayloadLanguageArBh CreateStreamTtsRequestPayloadLanguage = "ar-bh"
-	CreateStreamTtsRequestPayloadLanguageFrFr CreateStreamTtsRequestPayloadLanguage = "fr-fr"
-	CreateStreamTtsRequestPayloadLanguageArQa CreateStreamTtsRequestPayloadLanguage = "ar-qa"
-	CreateStreamTtsRequestPayloadLanguageUkUa CreateStreamTtsRequestPayloadLanguage = "uk-ua"
-	CreateStreamTtsRequestPayloadLanguageArTn CreateStreamTtsRequestPayloadLanguage = "ar-tn"
-	CreateStreamTtsRequestPayloadLanguageDeDe CreateStreamTtsRequestPayloadLanguage = "de-de"
-	CreateStreamTtsRequestPayloadLanguageArXa CreateStreamTtsRequestPayloadLanguage = "ar-xa"
-	CreateStreamTtsRequestPayloadLanguageArLb CreateStreamTtsRequestPayloadLanguage = "ar-lb"
-	CreateStreamTtsRequestPayloadLanguageZhHk CreateStreamTtsRequestPayloadLanguage = "zh-hk"
-	CreateStreamTtsRequestPayloadLanguageRoRo CreateStreamTtsRequestPayloadLanguage = "ro-ro"
-	CreateStreamTtsRequestPayloadLanguageAsIn CreateStreamTtsRequestPayloadLanguage = "as-in"
-	CreateStreamTtsRequestPayloadLanguageArIq CreateStreamTtsRequestPayloadLanguage = "ar-iq"
-	CreateStreamTtsRequestPayloadLanguageNlBe CreateStreamTtsRequestPayloadLanguage = "nl-be"
-	CreateStreamTtsRequestPayloadLanguageTeIn CreateStreamTtsRequestPayloadLanguage = "te-in"
-	CreateStreamTtsRequestPayloadLanguageIdId CreateStreamTtsRequestPayloadLanguage = "id-id"
-	CreateStreamTtsRequestPayloadLanguageArDz CreateStreamTtsRequestPayloadLanguage = "ar-dz"
+	TtsLanguageArKw TtsLanguage = "ar-kw"
+	TtsLanguageDeCh TtsLanguage = "de-ch"
+	TtsLanguageKoKr TtsLanguage = "ko-kr"
+	TtsLanguageThTh TtsLanguage = "th-th"
+	TtsLanguageMlIn TtsLanguage = "ml-in"
+	TtsLanguagePtPt TtsLanguage = "pt-pt"
+	TtsLanguageKnIn TtsLanguage = "kn-in"
+	TtsLanguageFiFi TtsLanguage = "fi-fi"
+	TtsLanguageEsMx TtsLanguage = "es-mx"
+	TtsLanguageFrCa TtsLanguage = "fr-ca"
+	TtsLanguageCsCz TtsLanguage = "cs-cz"
+	TtsLanguagePtBr TtsLanguage = "pt-br"
+	TtsLanguageHiIn TtsLanguage = "hi-in"
+	TtsLanguageArSy TtsLanguage = "ar-sy"
+	TtsLanguageEsUs TtsLanguage = "es-us"
+	TtsLanguageBnBd TtsLanguage = "bn-bd"
+	TtsLanguageJaJp TtsLanguage = "ja-jp"
+	TtsLanguageMrIn TtsLanguage = "mr-in"
+	TtsLanguageArMa TtsLanguage = "ar-ma"
+	TtsLanguageEsEs TtsLanguage = "es-es"
+	TtsLanguageEnUs TtsLanguage = "en-us"
+	TtsLanguageZhCn TtsLanguage = "zh-cn"
+	TtsLanguageElGr TtsLanguage = "el-gr"
+	TtsLanguagePlPl TtsLanguage = "pl-pl"
+	TtsLanguageArOm TtsLanguage = "ar-om"
+	TtsLanguageFrCh TtsLanguage = "fr-ch"
+	TtsLanguageEnUk TtsLanguage = "en-uk"
+	TtsLanguageEnAu TtsLanguage = "en-au"
+	TtsLanguageArJo TtsLanguage = "ar-jo"
+	TtsLanguageArAe TtsLanguage = "ar-ae"
+	TtsLanguageTrTr TtsLanguage = "tr-tr"
+	TtsLanguageArLy TtsLanguage = "ar-ly"
+	TtsLanguageRuRu TtsLanguage = "ru-ru"
+	TtsLanguageEnIn TtsLanguage = "en-in"
+	TtsLanguageArYe TtsLanguage = "ar-ye"
+	TtsLanguageArEg TtsLanguage = "ar-eg"
+	TtsLanguageFrBe TtsLanguage = "fr-be"
+	TtsLanguageTaIn TtsLanguage = "ta-in"
+	TtsLanguageZhTw TtsLanguage = "zh-tw"
+	TtsLanguageViVn TtsLanguage = "vi-vn"
+	TtsLanguageBnIn TtsLanguage = "bn-in"
+	TtsLanguageArSa TtsLanguage = "ar-sa"
+	TtsLanguageDeAt TtsLanguage = "de-at"
+	TtsLanguagePaIn TtsLanguage = "pa-in"
+	TtsLanguageItIt TtsLanguage = "it-it"
+	TtsLanguageNlNl TtsLanguage = "nl-nl"
+	TtsLanguageArBh TtsLanguage = "ar-bh"
+	TtsLanguageFrFr TtsLanguage = "fr-fr"
+	TtsLanguageArQa TtsLanguage = "ar-qa"
+	TtsLanguageUkUa TtsLanguage = "uk-ua"
+	TtsLanguageArTn TtsLanguage = "ar-tn"
+	TtsLanguageDeDe TtsLanguage = "de-de"
+	TtsLanguageArXa TtsLanguage = "ar-xa"
+	TtsLanguageArLb TtsLanguage = "ar-lb"
+	TtsLanguageZhHk TtsLanguage = "zh-hk"
+	TtsLanguageRoRo TtsLanguage = "ro-ro"
+	TtsLanguageAsIn TtsLanguage = "as-in"
+	TtsLanguageArIq TtsLanguage = "ar-iq"
+	TtsLanguageNlBe TtsLanguage = "nl-be"
+	TtsLanguageTeIn TtsLanguage = "te-in"
+	TtsLanguageIdId TtsLanguage = "id-id"
+	TtsLanguageArDz TtsLanguage = "ar-dz"
 )
 
-func NewCreateStreamTtsRequestPayloadLanguageFromString(s string) (CreateStreamTtsRequestPayloadLanguage, error) {
+func NewTtsLanguageFromString(s string) (TtsLanguage, error) {
 	switch s {
 	case "ar-kw":
-		return CreateStreamTtsRequestPayloadLanguageArKw, nil
+		return TtsLanguageArKw, nil
 	case "de-ch":
-		return CreateStreamTtsRequestPayloadLanguageDeCh, nil
+		return TtsLanguageDeCh, nil
 	case "ko-kr":
-		return CreateStreamTtsRequestPayloadLanguageKoKr, nil
+		return TtsLanguageKoKr, nil
 	case "th-th":
-		return CreateStreamTtsRequestPayloadLanguageThTh, nil
+		return TtsLanguageThTh, nil
 	case "ml-in":
-		return CreateStreamTtsRequestPayloadLanguageMlIn, nil
+		return TtsLanguageMlIn, nil
 	case "pt-pt":
-		return CreateStreamTtsRequestPayloadLanguagePtPt, nil
+		return TtsLanguagePtPt, nil
 	case "kn-in":
-		return CreateStreamTtsRequestPayloadLanguageKnIn, nil
+		return TtsLanguageKnIn, nil
 	case "fi-fi":
-		return CreateStreamTtsRequestPayloadLanguageFiFi, nil
+		return TtsLanguageFiFi, nil
 	case "es-mx":
-		return CreateStreamTtsRequestPayloadLanguageEsMx, nil
+		return TtsLanguageEsMx, nil
 	case "fr-ca":
-		return CreateStreamTtsRequestPayloadLanguageFrCa, nil
+		return TtsLanguageFrCa, nil
 	case "cs-cz":
-		return CreateStreamTtsRequestPayloadLanguageCsCz, nil
+		return TtsLanguageCsCz, nil
 	case "pt-br":
-		return CreateStreamTtsRequestPayloadLanguagePtBr, nil
+		return TtsLanguagePtBr, nil
 	case "hi-in":
-		return CreateStreamTtsRequestPayloadLanguageHiIn, nil
+		return TtsLanguageHiIn, nil
 	case "ar-sy":
-		return CreateStreamTtsRequestPayloadLanguageArSy, nil
+		return TtsLanguageArSy, nil
 	case "es-us":
-		return CreateStreamTtsRequestPayloadLanguageEsUs, nil
+		return TtsLanguageEsUs, nil
 	case "bn-bd":
-		return CreateStreamTtsRequestPayloadLanguageBnBd, nil
+		return TtsLanguageBnBd, nil
 	case "ja-jp":
-		return CreateStreamTtsRequestPayloadLanguageJaJp, nil
+		return TtsLanguageJaJp, nil
 	case "mr-in":
-		return CreateStreamTtsRequestPayloadLanguageMrIn, nil
+		return TtsLanguageMrIn, nil
 	case "ar-ma":
-		return CreateStreamTtsRequestPayloadLanguageArMa, nil
+		return TtsLanguageArMa, nil
 	case "es-es":
-		return CreateStreamTtsRequestPayloadLanguageEsEs, nil
+		return TtsLanguageEsEs, nil
 	case "en-us":
-		return CreateStreamTtsRequestPayloadLanguageEnUs, nil
+		return TtsLanguageEnUs, nil
 	case "zh-cn":
-		return CreateStreamTtsRequestPayloadLanguageZhCn, nil
+		return TtsLanguageZhCn, nil
 	case "el-gr":
-		return CreateStreamTtsRequestPayloadLanguageElGr, nil
+		return TtsLanguageElGr, nil
 	case "pl-pl":
-		return CreateStreamTtsRequestPayloadLanguagePlPl, nil
+		return TtsLanguagePlPl, nil
 	case "ar-om":
-		return CreateStreamTtsRequestPayloadLanguageArOm, nil
+		return TtsLanguageArOm, nil
 	case "fr-ch":
-		return CreateStreamTtsRequestPayloadLanguageFrCh, nil
+		return TtsLanguageFrCh, nil
 	case "en-uk":
-		return CreateStreamTtsRequestPayloadLanguageEnUk, nil
+		return TtsLanguageEnUk, nil
 	case "en-au":
-		return CreateStreamTtsRequestPayloadLanguageEnAu, nil
+		return TtsLanguageEnAu, nil
 	case "ar-jo":
-		return CreateStreamTtsRequestPayloadLanguageArJo, nil
+		return TtsLanguageArJo, nil
 	case "ar-ae":
-		return CreateStreamTtsRequestPayloadLanguageArAe, nil
+		return TtsLanguageArAe, nil
 	case "tr-tr":
-		return CreateStreamTtsRequestPayloadLanguageTrTr, nil
+		return TtsLanguageTrTr, nil
 	case "ar-ly":
-		return CreateStreamTtsRequestPayloadLanguageArLy, nil
+		return TtsLanguageArLy, nil
 	case "ru-ru":
-		return CreateStreamTtsRequestPayloadLanguageRuRu, nil
+		return TtsLanguageRuRu, nil
 	case "en-in":
-		return CreateStreamTtsRequestPayloadLanguageEnIn, nil
+		return TtsLanguageEnIn, nil
 	case "ar-ye":
-		return CreateStreamTtsRequestPayloadLanguageArYe, nil
+		return TtsLanguageArYe, nil
 	case "ar-eg":
-		return CreateStreamTtsRequestPayloadLanguageArEg, nil
+		return TtsLanguageArEg, nil
 	case "fr-be":
-		return CreateStreamTtsRequestPayloadLanguageFrBe, nil
+		return TtsLanguageFrBe, nil
 	case "ta-in":
-		return CreateStreamTtsRequestPayloadLanguageTaIn, nil
+		return TtsLanguageTaIn, nil
 	case "zh-tw":
-		return CreateStreamTtsRequestPayloadLanguageZhTw, nil
+		return TtsLanguageZhTw, nil
 	case "vi-vn":
-		return CreateStreamTtsRequestPayloadLanguageViVn, nil
+		return TtsLanguageViVn, nil
 	case "bn-in":
-		return CreateStreamTtsRequestPayloadLanguageBnIn, nil
+		return TtsLanguageBnIn, nil
 	case "ar-sa":
-		return CreateStreamTtsRequestPayloadLanguageArSa, nil
+		return TtsLanguageArSa, nil
 	case "de-at":
-		return CreateStreamTtsRequestPayloadLanguageDeAt, nil
+		return TtsLanguageDeAt, nil
 	case "pa-in":
-		return CreateStreamTtsRequestPayloadLanguagePaIn, nil
+		return TtsLanguagePaIn, nil
 	case "it-it":
-		return CreateStreamTtsRequestPayloadLanguageItIt, nil
+		return TtsLanguageItIt, nil
 	case "nl-nl":
-		return CreateStreamTtsRequestPayloadLanguageNlNl, nil
+		return TtsLanguageNlNl, nil
 	case "ar-bh":
-		return CreateStreamTtsRequestPayloadLanguageArBh, nil
+		return TtsLanguageArBh, nil
 	case "fr-fr":
-		return CreateStreamTtsRequestPayloadLanguageFrFr, nil
+		return TtsLanguageFrFr, nil
 	case "ar-qa":
-		return CreateStreamTtsRequestPayloadLanguageArQa, nil
+		return TtsLanguageArQa, nil
 	case "uk-ua":
-		return CreateStreamTtsRequestPayloadLanguageUkUa, nil
+		return TtsLanguageUkUa, nil
 	case "ar-tn":
-		return CreateStreamTtsRequestPayloadLanguageArTn, nil
+		return TtsLanguageArTn, nil
 	case "de-de":
-		return CreateStreamTtsRequestPayloadLanguageDeDe, nil
+		return TtsLanguageDeDe, nil
 	case "ar-xa":
-		return CreateStreamTtsRequestPayloadLanguageArXa, nil
+		return TtsLanguageArXa, nil
 	case "ar-lb":
-		return CreateStreamTtsRequestPayloadLanguageArLb, nil
+		return TtsLanguageArLb, nil
 	case "zh-hk":
-		return CreateStreamTtsRequestPayloadLanguageZhHk, nil
+		return TtsLanguageZhHk, nil
 	case "ro-ro":
-		return CreateStreamTtsRequestPayloadLanguageRoRo, nil
+		return TtsLanguageRoRo, nil
 	case "as-in":
-		return CreateStreamTtsRequestPayloadLanguageAsIn, nil
+		return TtsLanguageAsIn, nil
 	case "ar-iq":
-		return CreateStreamTtsRequestPayloadLanguageArIq, nil
+		return TtsLanguageArIq, nil
 	case "nl-be":
-		return CreateStreamTtsRequestPayloadLanguageNlBe, nil
+		return TtsLanguageNlBe, nil
 	case "te-in":
-		return CreateStreamTtsRequestPayloadLanguageTeIn, nil
+		return TtsLanguageTeIn, nil
 	case "id-id":
-		return CreateStreamTtsRequestPayloadLanguageIdId, nil
+		return TtsLanguageIdId, nil
 	case "ar-dz":
-		return CreateStreamTtsRequestPayloadLanguageArDz, nil
+		return TtsLanguageArDz, nil
 	}
-	var t CreateStreamTtsRequestPayloadLanguage
+	var t TtsLanguage
 	return "", fmt.Errorf("%s is not a valid %T", s, t)
 }
 
-func (c CreateStreamTtsRequestPayloadLanguage) Ptr() *CreateStreamTtsRequestPayloadLanguage {
+func (c TtsLanguage) Ptr() *TtsLanguage {
 	return &c
 }
 
-type CreateStreamTtsRequestPayloadSpeechModel string
+type SpeechModel string
 
 const (
-	CreateStreamTtsRequestPayloadSpeechModelAuto          CreateStreamTtsRequestPayloadSpeechModel = "auto"
-	CreateStreamTtsRequestPayloadSpeechModelMars8         CreateStreamTtsRequestPayloadSpeechModel = "mars-8"
-	CreateStreamTtsRequestPayloadSpeechModelMars8Flash    CreateStreamTtsRequestPayloadSpeechModel = "mars-8-flash"
-	CreateStreamTtsRequestPayloadSpeechModelMars8Instruct CreateStreamTtsRequestPayloadSpeechModel = "mars-8-instruct"
-	CreateStreamTtsRequestPayloadSpeechModelMars7         CreateStreamTtsRequestPayloadSpeechModel = "mars-7"
-	CreateStreamTtsRequestPayloadSpeechModelMars6         CreateStreamTtsRequestPayloadSpeechModel = "mars-6"
-	CreateStreamTtsRequestPayloadSpeechModelMarsPro       CreateStreamTtsRequestPayloadSpeechModel = "mars-pro"
-	CreateStreamTtsRequestPayloadSpeechModelMarsFlash     CreateStreamTtsRequestPayloadSpeechModel = "mars-flash"
-	CreateStreamTtsRequestPayloadSpeechModelMarsInstruct  CreateStreamTtsRequestPayloadSpeechModel = "mars-instruct"
+	SpeechModelAuto          SpeechModel = "auto"
+	SpeechModelMars8         SpeechModel = "mars-8"
+	SpeechModelMars8Flash    SpeechModel = "mars-8-flash"
+	SpeechModelMars8Instruct SpeechModel = "mars-8-instruct"
+	SpeechModelMars7         SpeechModel = "mars-7"
+	SpeechModelMars6         SpeechModel = "mars-6"
+	SpeechModelMarsPro       SpeechModel = "mars-pro"
+	SpeechModelMarsFlash     SpeechModel = "mars-flash"
+	SpeechModelMarsInstruct  SpeechModel = "mars-instruct"
 )
 
-func NewCreateStreamTtsRequestPayloadSpeechModelFromString(s string) (CreateStreamTtsRequestPayloadSpeechModel, error) {
+func NewSpeechModelFromString(s string) (SpeechModel, error) {
 	switch s {
 	case "auto":
-		return CreateStreamTtsRequestPayloadSpeechModelAuto, nil
+		return SpeechModelAuto, nil
 	case "mars-8":
-		return CreateStreamTtsRequestPayloadSpeechModelMars8, nil
+		return SpeechModelMars8, nil
 	case "mars-8-flash":
-		return CreateStreamTtsRequestPayloadSpeechModelMars8Flash, nil
+		return SpeechModelMars8Flash, nil
 	case "mars-8-instruct":
-		return CreateStreamTtsRequestPayloadSpeechModelMars8Instruct, nil
+		return SpeechModelMars8Instruct, nil
 	case "mars-7":
-		return CreateStreamTtsRequestPayloadSpeechModelMars7, nil
+		return SpeechModelMars7, nil
 	case "mars-6":
-		return CreateStreamTtsRequestPayloadSpeechModelMars6, nil
+		return SpeechModelMars6, nil
 	case "mars-pro":
-		return CreateStreamTtsRequestPayloadSpeechModelMarsPro, nil
+		return SpeechModelMarsPro, nil
 	case "mars-flash":
-		return CreateStreamTtsRequestPayloadSpeechModelMarsFlash, nil
+		return SpeechModelMarsFlash, nil
 	case "mars-instruct":
-		return CreateStreamTtsRequestPayloadSpeechModelMarsInstruct, nil
+		return SpeechModelMarsInstruct, nil
 	}
-	var t CreateStreamTtsRequestPayloadSpeechModel
+	var t SpeechModel
 	return "", fmt.Errorf("%s is not a valid %T", s, t)
 }
 
-func (c CreateStreamTtsRequestPayloadSpeechModel) Ptr() *CreateStreamTtsRequestPayloadSpeechModel {
+func (c SpeechModel) Ptr() *SpeechModel {
 	return &c
 }
 

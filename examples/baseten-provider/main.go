@@ -127,7 +127,7 @@ func main() {
 
 	req := &cambai.CreateStreamTtsRequestPayload{
 		Text:     "Hello. This is speech generated via a Baseten Mars8-Flash custom hosting provider.",
-		Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+		Language: cambai.TtsLanguageEnUs,
 	}
 
 	stream, err := ttsProvider.Tts(context.Background(), req)

@@ -21,8 +21,8 @@ func main() {
 		&cambai.CreateStreamTtsRequestPayload{
 			Text:        "Hello from Camb AI Go SDK!",
 			VoiceID:     20303,
-			Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
-			SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
+			Language:    cambai.TtsLanguageEnUs,
+			SpeechModel: cambai.SpeechModelMarsPro.Ptr(),
 			OutputConfiguration: &cambai.StreamTtsOutputConfiguration{
 				Format: cambai.OutputFormatWav.Ptr(),
 			},

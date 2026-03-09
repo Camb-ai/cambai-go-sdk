@@ -55,9 +55,9 @@ func main() {
 		context.Background(),
 		&cambai.CreateStreamTtsRequestPayload{
 			Text:     "Hello! Welcome to Camb.ai text-to-speech.",
-			Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+			Language: cambai.TtsLanguageEnUs,
 			VoiceID:  147320,
-			SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
+			SpeechModel: cambai.SpeechModelMarsPro.Ptr(),
 			OutputConfiguration: &cambai.StreamTtsOutputConfiguration{
 				Format: cambai.OutputFormatWav.Ptr(),
 			},
@@ -102,9 +102,9 @@ Camb.ai offers three MARS models optimized for different use cases:
 ```go MARS Flash
 stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
     Text:        "Fast and efficient speech synthesis.",
-    Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+    Language:    cambai.TtsLanguageEnUs,
     VoiceID:     147320,
-    SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsFlash.Ptr(),
+    SpeechModel: cambai.SpeechModelMarsFlash.Ptr(),
 })
 // Best for: Real-time voice agents, low-latency applications
 // Sample rate: 22.05kHz
@@ -112,9 +112,9 @@ stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
 ```go MARS Pro
 stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
     Text:        "High-fidelity audio production.",
-    Language:    cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+    Language:    cambai.TtsLanguageEnUs,
     VoiceID:     147320,
-    SpeechModel: cambai.CreateStreamTtsRequestPayloadSpeechModelMarsPro.Ptr(),
+    SpeechModel: cambai.SpeechModelMarsPro.Ptr(),
 })
 // Best for: Audio production, high-quality content
 // Sample rate: 48kHz
@@ -122,9 +122,9 @@ stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
 ```go MARS Instruct
 stream, _ := c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
     Text:             "Great to meet you!",
-    Language:         cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+    Language:         cambai.TtsLanguageEnUs,
     VoiceID:          147320,
-    SpeechModel:      cambai.CreateStreamTtsRequestPayloadSpeechModelMarsInstruct.Ptr(),
+    SpeechModel:      cambai.SpeechModelMarsInstruct.Ptr(),
     UserInstructions: cambai.String("Speak in a warm, friendly tone"),
 })
 // Best for: Fine-grained control over tone and style
@@ -155,13 +155,13 @@ Languages supported by each model mentioned at [MARS Models](https://docs.camb.a
 ```go
 // English (US)
 c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
-    Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+    Language: cambai.TtsLanguageEnUs,
     // ...
 })
 
 // Spanish
 c.TextToSpeech.Tts(ctx, &cambai.CreateStreamTtsRequestPayload{
-    Language: cambai.CreateStreamTtsRequestPayloadLanguageEsEs,
+    Language: cambai.TtsLanguageEsEs,
     // ...
 })
 ```
@@ -199,7 +199,7 @@ var ttsProvider provider.TtsProvider = &BasetenProvider{
 
 req := &cambai.CreateStreamTtsRequestPayload{
 	Text:     "Hello from the Baseten Mars8-Flash custom hosting provider!",
-	Language: cambai.CreateStreamTtsRequestPayloadLanguageEnUs,
+	Language: cambai.TtsLanguageEnUs,
 }
 
 stream, err := ttsProvider.Tts(context.Background(), req)
