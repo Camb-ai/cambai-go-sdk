@@ -8,12 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
-	multipart "mime/multipart"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -38,9 +37,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) GetDictionaries(
 	ctx context.Context,
-	request *cambaigosdk.GetDictionariesDictionariesGetRequest,
+	request *sdk.GetDictionariesDictionariesGetRequest,
 	opts ...option.RequestOption,
-) ([]*cambaigosdk.DictionaryWithTerms, error) {
+) ([]*sdk.DictionaryWithTerms, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -50,7 +49,7 @@ func (c *Client) GetDictionaries(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "dictionaries"
+	endpointURL := baseURL + "/dictionaries"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -71,7 +70,7 @@ func (c *Client) GetDictionaries(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -81,17 +80,19 @@ func (c *Client) GetDictionaries(
 		return apiError
 	}
 
-	var response []*cambaigosdk.DictionaryWithTerms
+	var response []*sdk.DictionaryWithTerms
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -101,7 +102,8 @@ func (c *Client) GetDictionaries(
 
 func (c *Client) CreateDictionaryFromFile(
 	ctx context.Context,
-	request *cambaigosdk.BodyCreateDictionaryFromFileDictionariesCreateFromFilePost,
+	dictionaryFile io.Reader,
+	request *sdk.BodyCreateDictionaryFromFileDictionariesCreateFromFilePost,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -113,7 +115,7 @@ func (c *Client) CreateDictionaryFromFile(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "dictionaries/create-from-file"
+	endpointURL := baseURL + "/dictionaries/create-from-file"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -134,7 +136,7 @@ func (c *Client) CreateDictionaryFromFile(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -145,8 +147,10 @@ func (c *Client) CreateDictionaryFromFile(
 	}
 
 	var response interface{}
-	requestBuffer := bytes.NewBuffer(nil)
-	writer := multipart.NewWriter(requestBuffer)
+	writer := core.NewMultipartWriter()
+	if err := writer.WriteFile("dictionary_file", dictionaryFile); err != nil {
+		return nil, err
+	}
 	if err := writer.WriteField("dictionary_name", fmt.Sprintf("%v", request.DictionaryName)); err != nil {
 		return nil, err
 	}
@@ -158,19 +162,21 @@ func (c *Client) CreateDictionaryFromFile(
 	if err := writer.Close(); err != nil {
 		return nil, err
 	}
-	headers.Set("Content-Type", writer.FormDataContentType())
+	headers.Set("Content-Type", writer.ContentType())
 
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      requestBuffer,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         writer.Buffer(),
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -181,9 +187,9 @@ func (c *Client) CreateDictionaryFromFile(
 func (c *Client) GetDictionaryInfo(
 	ctx context.Context,
 	dictionaryID int,
-	request *cambaigosdk.GetDictionaryInfoDictionariesDictionaryIDGetRequest,
+	request *sdk.GetDictionaryInfoDictionariesDictionaryIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.DictionaryWithTerms, error) {
+) (*sdk.DictionaryWithTerms, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -193,7 +199,7 @@ func (c *Client) GetDictionaryInfo(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dictionaries/%v", dictionaryID)
+	endpointURL := core.EncodeURL(baseURL+"/dictionaries/%v", dictionaryID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -214,7 +220,7 @@ func (c *Client) GetDictionaryInfo(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -224,17 +230,19 @@ func (c *Client) GetDictionaryInfo(
 		return apiError
 	}
 
-	var response *cambaigosdk.DictionaryWithTerms
+	var response *sdk.DictionaryWithTerms
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -245,7 +253,7 @@ func (c *Client) GetDictionaryInfo(
 func (c *Client) DeleteDictionary(
 	ctx context.Context,
 	dictionaryID int,
-	request *cambaigosdk.DeleteDictionaryDictionariesDictionaryIDDeleteRequest,
+	request *sdk.DeleteDictionaryDictionariesDictionaryIDDeleteRequest,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -257,7 +265,7 @@ func (c *Client) DeleteDictionary(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dictionaries/%v", dictionaryID)
+	endpointURL := core.EncodeURL(baseURL+"/dictionaries/%v", dictionaryID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -278,7 +286,7 @@ func (c *Client) DeleteDictionary(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -292,13 +300,15 @@ func (c *Client) DeleteDictionary(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodDelete,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodDelete,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -309,9 +319,9 @@ func (c *Client) DeleteDictionary(
 func (c *Client) GetDictionaryDetails(
 	ctx context.Context,
 	dictionaryID int,
-	request *cambaigosdk.GetDictionaryDetailsDictionariesDictionaryIDFullDetailsGetRequest,
+	request *sdk.GetDictionaryDetailsDictionariesDictionaryIDFullDetailsGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.DictionaryWithTerms, error) {
+) (*sdk.DictionaryWithTerms, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -321,7 +331,7 @@ func (c *Client) GetDictionaryDetails(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dictionaries/%v/full-details", dictionaryID)
+	endpointURL := core.EncodeURL(baseURL+"/dictionaries/%v/full-details", dictionaryID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -342,7 +352,7 @@ func (c *Client) GetDictionaryDetails(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -352,17 +362,19 @@ func (c *Client) GetDictionaryDetails(
 		return apiError
 	}
 
-	var response *cambaigosdk.DictionaryWithTerms
+	var response *sdk.DictionaryWithTerms
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -373,7 +385,7 @@ func (c *Client) GetDictionaryDetails(
 func (c *Client) AddTermToDictionary(
 	ctx context.Context,
 	dictionaryID int,
-	request *cambaigosdk.AddDictionaryTermPayload,
+	request *sdk.AddDictionaryTermPayload,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -385,7 +397,7 @@ func (c *Client) AddTermToDictionary(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dictionaries/%v/add-term", dictionaryID)
+	endpointURL := core.EncodeURL(baseURL+"/dictionaries/%v/add-term", dictionaryID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -396,6 +408,7 @@ func (c *Client) AddTermToDictionary(
 	}
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -406,7 +419,7 @@ func (c *Client) AddTermToDictionary(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -420,14 +433,16 @@ func (c *Client) AddTermToDictionary(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -439,7 +454,7 @@ func (c *Client) UpdateTermTranslationInDictionaryUsingTermID(
 	ctx context.Context,
 	dictionaryID int,
 	termID int,
-	request *cambaigosdk.UpdateTermTranslationsPayload,
+	request *sdk.UpdateTermTranslationsPayload,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -451,7 +466,11 @@ func (c *Client) UpdateTermTranslationInDictionaryUsingTermID(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dictionaries/term/%v/%v", dictionaryID, termID)
+	endpointURL := core.EncodeURL(
+		baseURL+"/dictionaries/term/%v/%v",
+		dictionaryID,
+		termID,
+	)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -462,6 +481,7 @@ func (c *Client) UpdateTermTranslationInDictionaryUsingTermID(
 	}
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -472,7 +492,7 @@ func (c *Client) UpdateTermTranslationInDictionaryUsingTermID(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -486,14 +506,16 @@ func (c *Client) UpdateTermTranslationInDictionaryUsingTermID(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPut,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPut,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -505,7 +527,7 @@ func (c *Client) DeleteDictionaryTerm(
 	ctx context.Context,
 	dictionaryID int,
 	termID int,
-	request *cambaigosdk.DeleteDictionaryTermDictionariesTermDictionaryIDTermIDDeleteRequest,
+	request *sdk.DeleteDictionaryTermDictionariesTermDictionaryIDTermIDDeleteRequest,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -517,7 +539,11 @@ func (c *Client) DeleteDictionaryTerm(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dictionaries/term/%v/%v", dictionaryID, termID)
+	endpointURL := core.EncodeURL(
+		baseURL+"/dictionaries/term/%v/%v",
+		dictionaryID,
+		termID,
+	)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -538,7 +564,7 @@ func (c *Client) DeleteDictionaryTerm(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -552,13 +578,15 @@ func (c *Client) DeleteDictionaryTerm(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodDelete,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodDelete,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

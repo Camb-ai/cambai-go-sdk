@@ -8,11 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -37,9 +37,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) EndToEndDubbing(
 	ctx context.Context,
-	request *cambaigosdk.EndToEndDubbingRequestPayload,
+	request *sdk.EndToEndDubbingRequestPayload,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineCallResult, error) {
+) (*sdk.OrchestratorPipelineCallResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -49,7 +49,7 @@ func (c *Client) EndToEndDubbing(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "dub"
+	endpointURL := baseURL + "/dub"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -60,6 +60,7 @@ func (c *Client) EndToEndDubbing(
 	}
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -70,7 +71,7 @@ func (c *Client) EndToEndDubbing(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -80,18 +81,20 @@ func (c *Client) EndToEndDubbing(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineCallResult
+	var response *sdk.OrchestratorPipelineCallResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -102,9 +105,9 @@ func (c *Client) EndToEndDubbing(
 func (c *Client) GetEndToEndDubbingStatus(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.GetEndToEndDubbingStatusDubTaskIDGetRequest,
+	request *sdk.GetEndToEndDubbingStatusDubTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -114,7 +117,7 @@ func (c *Client) GetEndToEndDubbingStatus(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dub/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/dub/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -135,7 +138,7 @@ func (c *Client) GetEndToEndDubbingStatus(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -145,17 +148,19 @@ func (c *Client) GetEndToEndDubbingStatus(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -168,9 +173,9 @@ func (c *Client) GetEndToEndDubbingStatus(
 func (c *Client) GetDubbedRunInfo(
 	ctx context.Context,
 	runID *int,
-	request *cambaigosdk.GetDubbedRunInfoDubResultRunIDGetRequest,
+	request *sdk.GetDubbedRunInfoDubResultRunIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.GetDubbedRunInfoDubResultRunIDGetResponse, error) {
+) (*sdk.GetDubbedRunInfoDubResultRunIDGetResponse, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -180,7 +185,7 @@ func (c *Client) GetDubbedRunInfo(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dub-result/%v", runID)
+	endpointURL := core.EncodeURL(baseURL+"/dub-result/%v", runID)
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 
@@ -193,7 +198,7 @@ func (c *Client) GetDubbedRunInfo(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -203,17 +208,19 @@ func (c *Client) GetDubbedRunInfo(
 		return apiError
 	}
 
-	var response *cambaigosdk.GetDubbedRunInfoDubResultRunIDGetResponse
+	var response *sdk.GetDubbedRunInfoDubResultRunIDGetResponse
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -223,9 +230,9 @@ func (c *Client) GetDubbedRunInfo(
 
 func (c *Client) GetDubbingRunsResults(
 	ctx context.Context,
-	request *cambaigosdk.GetDubbingRunsResultsDubbingResultsPostRequest,
+	request *sdk.GetDubbingRunsResultsDubbingResultsPostRequest,
 	opts ...option.RequestOption,
-) (map[string]*cambaigosdk.GetDubbingRunsResultsDubbingResultsPostResponseValue, error) {
+) (map[string]*sdk.GetDubbingRunsResultsDubbingResultsPostResponseValue, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -235,7 +242,7 @@ func (c *Client) GetDubbingRunsResults(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "dubbing-results"
+	endpointURL := baseURL + "/dubbing-results"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -249,6 +256,7 @@ func (c *Client) GetDubbingRunsResults(
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -259,7 +267,7 @@ func (c *Client) GetDubbingRunsResults(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -269,18 +277,20 @@ func (c *Client) GetDubbingRunsResults(
 		return apiError
 	}
 
-	var response map[string]*cambaigosdk.GetDubbingRunsResultsDubbingResultsPostResponseValue
+	var response map[string]*sdk.GetDubbingRunsResultsDubbingResultsPostResponseValue
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -291,8 +301,8 @@ func (c *Client) GetDubbingRunsResults(
 func (c *Client) GetDubbedRunTranscript(
 	ctx context.Context,
 	runID *int,
-	language cambaigosdk.Languages,
-	request *cambaigosdk.GetDubbedRunTranscriptTranscriptRunIDLanguageGetRequest,
+	language sdk.Languages,
+	request *sdk.GetDubbedRunTranscriptTranscriptRunIDLanguageGetRequest,
 	opts ...option.RequestOption,
 ) (map[string]string, error) {
 	options := core.NewRequestOptions(opts...)
@@ -304,7 +314,11 @@ func (c *Client) GetDubbedRunTranscript(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"transcript/%v/%v", runID, language)
+	endpointURL := core.EncodeURL(
+		baseURL+"/transcript/%v/%v",
+		runID,
+		language,
+	)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -325,7 +339,7 @@ func (c *Client) GetDubbedRunTranscript(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -339,13 +353,15 @@ func (c *Client) GetDubbedRunTranscript(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -356,10 +372,10 @@ func (c *Client) GetDubbedRunTranscript(
 func (c *Client) GetDubbedOutputInAltFormat(
 	ctx context.Context,
 	runID *int,
-	language cambaigosdk.Languages,
-	request *cambaigosdk.DubbedOutputInAltFormatRequestPayload,
+	language sdk.Languages,
+	request *sdk.DubbedOutputInAltFormatRequestPayload,
 	opts ...option.RequestOption,
-) (*cambaigosdk.GetDubbedOutputInAltFormatDubAltFormatRunIDLanguagePostResponse, error) {
+) (*sdk.GetDubbedOutputInAltFormatDubAltFormatRunIDLanguagePostResponse, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -369,9 +385,14 @@ func (c *Client) GetDubbedOutputInAltFormat(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dub-alt-format/%v/%v", runID, language)
+	endpointURL := core.EncodeURL(
+		baseURL+"/dub-alt-format/%v/%v",
+		runID,
+		language,
+	)
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -382,7 +403,7 @@ func (c *Client) GetDubbedOutputInAltFormat(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -392,18 +413,20 @@ func (c *Client) GetDubbedOutputInAltFormat(
 		return apiError
 	}
 
-	var response *cambaigosdk.GetDubbedOutputInAltFormatDubAltFormatRunIDLanguagePostResponse
+	var response *sdk.GetDubbedOutputInAltFormatDubAltFormatRunIDLanguagePostResponse
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -414,9 +437,9 @@ func (c *Client) GetDubbedOutputInAltFormat(
 func (c *Client) GetDubbedOutputInAltFormatStatus(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.GetDubbedOutputInAltFormatStatusDubAltFormatTaskIDGetRequest,
+	request *sdk.GetDubbedOutputInAltFormatStatusDubAltFormatTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -426,7 +449,7 @@ func (c *Client) GetDubbedOutputInAltFormatStatus(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"dub-alt-format/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/dub-alt-format/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -447,7 +470,7 @@ func (c *Client) GetDubbedOutputInAltFormatStatus(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -457,17 +480,19 @@ func (c *Client) GetDubbedOutputInAltFormatStatus(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -478,9 +503,9 @@ func (c *Client) GetDubbedOutputInAltFormatStatus(
 func (c *Client) PollDiscordDubTask(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.PollDiscordDubTaskDiscordDubTaskIDGetRequest,
+	request *sdk.PollDiscordDubTaskDiscordDubTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -490,7 +515,7 @@ func (c *Client) PollDiscordDubTask(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"discord/dub/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/discord/dub/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -511,7 +536,7 @@ func (c *Client) PollDiscordDubTask(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -521,17 +546,19 @@ func (c *Client) PollDiscordDubTask(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -542,9 +569,9 @@ func (c *Client) PollDiscordDubTask(
 func (c *Client) PollTwitterDubTask(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.PollTwitterDubTaskTwitterDubTaskIDGetRequest,
+	request *sdk.PollTwitterDubTaskTwitterDubTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -554,7 +581,7 @@ func (c *Client) PollTwitterDubTask(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"twitter/dub/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/twitter/dub/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -575,7 +602,7 @@ func (c *Client) PollTwitterDubTask(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -585,17 +612,19 @@ func (c *Client) PollTwitterDubTask(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

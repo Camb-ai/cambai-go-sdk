@@ -7,11 +7,11 @@ import (
 	context "context"
 	json "encoding/json"
 	errors "errors"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -36,9 +36,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) ListFolders(
 	ctx context.Context,
-	request *cambaigosdk.ListFoldersFoldersGetRequest,
+	request *sdk.ListFoldersFoldersGetRequest,
 	opts ...option.RequestOption,
-) ([]*cambaigosdk.Folder, error) {
+) ([]*sdk.Folder, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -48,7 +48,7 @@ func (c *Client) ListFolders(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "folders"
+	endpointURL := baseURL + "/folders"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -69,7 +69,7 @@ func (c *Client) ListFolders(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -79,17 +79,19 @@ func (c *Client) ListFolders(
 		return apiError
 	}
 
-	var response []*cambaigosdk.Folder
+	var response []*sdk.Folder
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -99,7 +101,7 @@ func (c *Client) ListFolders(
 
 func (c *Client) CreateFolder(
 	ctx context.Context,
-	request *cambaigosdk.CreateFolderPayload,
+	request *sdk.CreateFolderPayload,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -111,7 +113,7 @@ func (c *Client) CreateFolder(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "folders/create"
+	endpointURL := baseURL + "/folders/create"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -122,6 +124,7 @@ func (c *Client) CreateFolder(
 	}
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -132,7 +135,7 @@ func (c *Client) CreateFolder(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -146,14 +149,16 @@ func (c *Client) CreateFolder(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

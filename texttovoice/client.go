@@ -8,11 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -37,9 +37,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) CreateTextToVoice(
 	ctx context.Context,
-	request *cambaigosdk.CreateTextToVoiceRequestPayload,
+	request *sdk.CreateTextToVoiceRequestPayload,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineCallResult, error) {
+) (*sdk.OrchestratorPipelineCallResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -49,12 +49,13 @@ func (c *Client) CreateTextToVoice(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "text-to-voice"
+	endpointURL := baseURL + "/text-to-voice"
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -65,7 +66,7 @@ func (c *Client) CreateTextToVoice(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -75,18 +76,20 @@ func (c *Client) CreateTextToVoice(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineCallResult
+	var response *sdk.OrchestratorPipelineCallResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -97,9 +100,9 @@ func (c *Client) CreateTextToVoice(
 func (c *Client) GetTextToVoiceStatus(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.GetTextToVoiceStatusTextToVoiceTaskIDGetRequest,
+	request *sdk.GetTextToVoiceStatusTextToVoiceTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -109,7 +112,7 @@ func (c *Client) GetTextToVoiceStatus(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"text-to-voice/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/text-to-voice/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -133,7 +136,7 @@ func (c *Client) GetTextToVoiceStatus(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -143,17 +146,19 @@ func (c *Client) GetTextToVoiceStatus(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -164,9 +169,9 @@ func (c *Client) GetTextToVoiceStatus(
 func (c *Client) GetTextToVoiceResult(
 	ctx context.Context,
 	runID *int,
-	request *cambaigosdk.GetTextToVoiceResultTextToVoiceResultRunIDGetRequest,
+	request *sdk.GetTextToVoiceResultTextToVoiceResultRunIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.GetTextToVoiceResultOut, error) {
+) (*sdk.GetTextToVoiceResultOut, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -176,7 +181,7 @@ func (c *Client) GetTextToVoiceResult(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"text-to-voice-result/%v", runID)
+	endpointURL := core.EncodeURL(baseURL+"/text-to-voice-result/%v", runID)
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 
@@ -189,7 +194,7 @@ func (c *Client) GetTextToVoiceResult(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -199,17 +204,19 @@ func (c *Client) GetTextToVoiceResult(
 		return apiError
 	}
 
-	var response *cambaigosdk.GetTextToVoiceResultOut
+	var response *sdk.GetTextToVoiceResultOut
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

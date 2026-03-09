@@ -8,12 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
-	multipart "mime/multipart"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -38,9 +37,10 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) CreateAudioSeparation(
 	ctx context.Context,
-	request *cambaigosdk.BodyCreateAudioSeparationAudioSeparationPost,
+	mediaFile io.Reader,
+	request *sdk.BodyCreateAudioSeparationAudioSeparationPost,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineCallResult, error) {
+) (*sdk.OrchestratorPipelineCallResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -50,7 +50,7 @@ func (c *Client) CreateAudioSeparation(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "audio-separation"
+	endpointURL := baseURL + "/audio-separation"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -74,7 +74,7 @@ func (c *Client) CreateAudioSeparation(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -84,9 +84,13 @@ func (c *Client) CreateAudioSeparation(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineCallResult
-	requestBuffer := bytes.NewBuffer(nil)
-	writer := multipart.NewWriter(requestBuffer)
+	var response *sdk.OrchestratorPipelineCallResult
+	writer := core.NewMultipartWriter()
+	if mediaFile != nil {
+		if err := writer.WriteFile("media_file", mediaFile); err != nil {
+			return nil, err
+		}
+	}
 	if request.ProjectName != nil {
 		if err := writer.WriteField("project_name", fmt.Sprintf("%v", *request.ProjectName)); err != nil {
 			return nil, err
@@ -105,19 +109,21 @@ func (c *Client) CreateAudioSeparation(
 	if err := writer.Close(); err != nil {
 		return nil, err
 	}
-	headers.Set("Content-Type", writer.FormDataContentType())
+	headers.Set("Content-Type", writer.ContentType())
 
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      requestBuffer,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         writer.Buffer(),
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -128,9 +134,9 @@ func (c *Client) CreateAudioSeparation(
 func (c *Client) GetAudioSeparationStatus(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.GetAudioSeparationStatusAudioSeparationTaskIDGetRequest,
+	request *sdk.GetAudioSeparationStatusAudioSeparationTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -140,7 +146,7 @@ func (c *Client) GetAudioSeparationStatus(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"audio-separation/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/audio-separation/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -161,7 +167,7 @@ func (c *Client) GetAudioSeparationStatus(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -171,17 +177,19 @@ func (c *Client) GetAudioSeparationStatus(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -192,9 +200,9 @@ func (c *Client) GetAudioSeparationStatus(
 func (c *Client) GetAudioSeparationRunInfo(
 	ctx context.Context,
 	runID *int,
-	request *cambaigosdk.GetAudioSeparationRunInfoAudioSeparationResultRunIDGetRequest,
+	request *sdk.GetAudioSeparationRunInfoAudioSeparationResultRunIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.GetAudioSeparationResultOut, error) {
+) (*sdk.GetAudioSeparationResultOut, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -204,7 +212,7 @@ func (c *Client) GetAudioSeparationRunInfo(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"audio-separation-result/%v", runID)
+	endpointURL := core.EncodeURL(baseURL+"/audio-separation-result/%v", runID)
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 
@@ -217,7 +225,7 @@ func (c *Client) GetAudioSeparationRunInfo(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -227,17 +235,19 @@ func (c *Client) GetAudioSeparationRunInfo(
 		return apiError
 	}
 
-	var response *cambaigosdk.GetAudioSeparationResultOut
+	var response *sdk.GetAudioSeparationResultOut
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -247,9 +257,9 @@ func (c *Client) GetAudioSeparationRunInfo(
 
 func (c *Client) GetAudioSeparationRunsResults(
 	ctx context.Context,
-	request *cambaigosdk.GetAudioSeparationRunsResultsAudioSeparationResultsPostRequest,
+	request *sdk.GetAudioSeparationRunsResultsAudioSeparationResultsPostRequest,
 	opts ...option.RequestOption,
-) (map[string]*cambaigosdk.GetAudioSeparationResultOut, error) {
+) (map[string]*sdk.GetAudioSeparationResultOut, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -259,7 +269,7 @@ func (c *Client) GetAudioSeparationRunsResults(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "audio-separation-results"
+	endpointURL := baseURL + "/audio-separation-results"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -273,6 +283,7 @@ func (c *Client) GetAudioSeparationRunsResults(
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -283,7 +294,7 @@ func (c *Client) GetAudioSeparationRunsResults(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -293,18 +304,20 @@ func (c *Client) GetAudioSeparationRunsResults(
 		return apiError
 	}
 
-	var response map[string]*cambaigosdk.GetAudioSeparationResultOut
+	var response map[string]*sdk.GetAudioSeparationResultOut
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

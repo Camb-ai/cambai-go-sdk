@@ -8,11 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -37,7 +37,7 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) TranslationStream(
 	ctx context.Context,
-	request *cambaigosdk.CreateTranslationStreamRequestPayload,
+	request *sdk.CreateTranslationStreamRequestPayload,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -49,12 +49,13 @@ func (c *Client) TranslationStream(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "translation/stream"
+	endpointURL := baseURL + "/translation/stream"
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -65,7 +66,7 @@ func (c *Client) TranslationStream(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -79,14 +80,16 @@ func (c *Client) TranslationStream(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -96,7 +99,7 @@ func (c *Client) TranslationStream(
 
 func (c *Client) CreateTranslation(
 	ctx context.Context,
-	request *cambaigosdk.CreateTranslationRequestPayload,
+	request *sdk.CreateTranslationRequestPayload,
 	opts ...option.RequestOption,
 ) (interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -108,7 +111,7 @@ func (c *Client) CreateTranslation(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "translate"
+	endpointURL := baseURL + "/translate"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -119,6 +122,7 @@ func (c *Client) CreateTranslation(
 	}
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -129,7 +133,7 @@ func (c *Client) CreateTranslation(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -143,14 +147,16 @@ func (c *Client) CreateTranslation(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -161,9 +167,9 @@ func (c *Client) CreateTranslation(
 func (c *Client) GetTranslationTaskStatus(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.GetTranslationTaskStatusTranslateTaskIDGetRequest,
+	request *sdk.GetTranslationTaskStatusTranslateTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -173,7 +179,7 @@ func (c *Client) GetTranslationTaskStatus(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"translate/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/translate/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -194,7 +200,7 @@ func (c *Client) GetTranslationTaskStatus(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -204,17 +210,19 @@ func (c *Client) GetTranslationTaskStatus(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -227,9 +235,9 @@ func (c *Client) GetTranslationTaskStatus(
 func (c *Client) GetTranslationResult(
 	ctx context.Context,
 	runID *int,
-	request *cambaigosdk.GetTranslationResultTranslationResultRunIDGetRequest,
+	request *sdk.GetTranslationResultTranslationResultRunIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.TranslationResult, error) {
+) (*sdk.TranslationResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -239,7 +247,7 @@ func (c *Client) GetTranslationResult(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"translation-result/%v", runID)
+	endpointURL := core.EncodeURL(baseURL+"/translation-result/%v", runID)
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 	if request.Traceparent != nil {
@@ -255,7 +263,7 @@ func (c *Client) GetTranslationResult(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -265,17 +273,19 @@ func (c *Client) GetTranslationResult(
 		return apiError
 	}
 
-	var response *cambaigosdk.TranslationResult
+	var response *sdk.TranslationResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -285,9 +295,9 @@ func (c *Client) GetTranslationResult(
 
 func (c *Client) GetTranslationResults(
 	ctx context.Context,
-	request *cambaigosdk.GetTranslationResultsTranslationResultsPostRequest,
+	request *sdk.GetTranslationResultsTranslationResultsPostRequest,
 	opts ...option.RequestOption,
-) (map[string]*cambaigosdk.TranslationResult, error) {
+) (map[string]*sdk.TranslationResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -297,7 +307,7 @@ func (c *Client) GetTranslationResults(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "translation-results"
+	endpointURL := baseURL + "/translation-results"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -311,6 +321,7 @@ func (c *Client) GetTranslationResults(
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -321,7 +332,7 @@ func (c *Client) GetTranslationResults(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -331,18 +342,20 @@ func (c *Client) GetTranslationResults(
 		return apiError
 	}
 
-	var response map[string]*cambaigosdk.TranslationResult
+	var response map[string]*sdk.TranslationResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

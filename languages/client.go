@@ -7,11 +7,11 @@ import (
 	context "context"
 	json "encoding/json"
 	errors "errors"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -36,9 +36,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) GetSourceLanguages(
 	ctx context.Context,
-	request *cambaigosdk.GetSourceLanguagesSourceLanguagesGetRequest,
+	request *sdk.GetSourceLanguagesSourceLanguagesGetRequest,
 	opts ...option.RequestOption,
-) ([]*cambaigosdk.LanguagePydanticModel, error) {
+) ([]*sdk.LanguagePydanticModel, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -48,7 +48,7 @@ func (c *Client) GetSourceLanguages(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "source-languages"
+	endpointURL := baseURL + "/source-languages"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -69,7 +69,7 @@ func (c *Client) GetSourceLanguages(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -79,17 +79,19 @@ func (c *Client) GetSourceLanguages(
 		return apiError
 	}
 
-	var response []*cambaigosdk.LanguagePydanticModel
+	var response []*sdk.LanguagePydanticModel
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -99,9 +101,9 @@ func (c *Client) GetSourceLanguages(
 
 func (c *Client) GetTargetLanguages(
 	ctx context.Context,
-	request *cambaigosdk.GetTargetLanguagesTargetLanguagesGetRequest,
+	request *sdk.GetTargetLanguagesTargetLanguagesGetRequest,
 	opts ...option.RequestOption,
-) ([]*cambaigosdk.LanguagePydanticModel, error) {
+) ([]*sdk.LanguagePydanticModel, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -111,7 +113,7 @@ func (c *Client) GetTargetLanguages(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "target-languages"
+	endpointURL := baseURL + "/target-languages"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -132,7 +134,7 @@ func (c *Client) GetTargetLanguages(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -142,17 +144,19 @@ func (c *Client) GetTargetLanguages(
 		return apiError
 	}
 
-	var response []*cambaigosdk.LanguagePydanticModel
+	var response []*sdk.LanguagePydanticModel
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

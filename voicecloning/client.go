@@ -8,12 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
-	multipart "mime/multipart"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -38,9 +37,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) ListVoices(
 	ctx context.Context,
-	request *cambaigosdk.ListVoicesListVoicesGetRequest,
+	request *sdk.ListVoicesListVoicesGetRequest,
 	opts ...option.RequestOption,
-) ([]*cambaigosdk.ListVoicesListVoicesGetResponseItem, error) {
+) ([]*sdk.ListVoicesListVoicesGetResponseItem, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -50,7 +49,7 @@ func (c *Client) ListVoices(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "list-voices"
+	endpointURL := baseURL + "/list-voices"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -71,7 +70,7 @@ func (c *Client) ListVoices(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -81,17 +80,19 @@ func (c *Client) ListVoices(
 		return apiError
 	}
 
-	var response []*cambaigosdk.ListVoicesListVoicesGetResponseItem
+	var response []*sdk.ListVoicesListVoicesGetResponseItem
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -101,9 +102,10 @@ func (c *Client) ListVoices(
 
 func (c *Client) CreateCustomVoice(
 	ctx context.Context,
-	request *cambaigosdk.BodyCreateCustomVoiceCreateCustomVoicePost,
+	file io.Reader,
+	request *sdk.BodyCreateCustomVoiceCreateCustomVoicePost,
 	opts ...option.RequestOption,
-) (*cambaigosdk.CreateCustomVoiceOut, error) {
+) (*sdk.CreateCustomVoiceOut, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -113,7 +115,7 @@ func (c *Client) CreateCustomVoice(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "create-custom-voice"
+	endpointURL := baseURL + "/create-custom-voice"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -134,7 +136,7 @@ func (c *Client) CreateCustomVoice(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -144,13 +146,15 @@ func (c *Client) CreateCustomVoice(
 		return apiError
 	}
 
-	var response *cambaigosdk.CreateCustomVoiceOut
-	requestBuffer := bytes.NewBuffer(nil)
-	writer := multipart.NewWriter(requestBuffer)
+	var response *sdk.CreateCustomVoiceOut
+	writer := core.NewMultipartWriter()
+	if err := writer.WriteFile("file", file); err != nil {
+		return nil, err
+	}
 	if err := writer.WriteField("voice_name", fmt.Sprintf("%v", request.VoiceName)); err != nil {
 		return nil, err
 	}
-	if err := core.WriteMultipartJSON(writer, "gender", request.Gender); err != nil {
+	if err := writer.WriteJSON("gender", request.Gender); err != nil {
 		return nil, err
 	}
 	if request.Description != nil {
@@ -169,7 +173,7 @@ func (c *Client) CreateCustomVoice(
 		}
 	}
 	if request.Language != nil {
-		if err := core.WriteMultipartJSON(writer, "language", *request.Language); err != nil {
+		if err := writer.WriteJSON("language", *request.Language); err != nil {
 			return nil, err
 		}
 	}
@@ -181,19 +185,21 @@ func (c *Client) CreateCustomVoice(
 	if err := writer.Close(); err != nil {
 		return nil, err
 	}
-	headers.Set("Content-Type", writer.FormDataContentType())
+	headers.Set("Content-Type", writer.ContentType())
 
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      requestBuffer,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         writer.Buffer(),
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

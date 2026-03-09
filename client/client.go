@@ -4,26 +4,26 @@ package client
 
 import (
 	context "context"
-	audioseparation "github.com/camb-ai/cambai-go-sdk/audioseparation"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	deprecatedstreaming "github.com/camb-ai/cambai-go-sdk/deprecatedstreaming"
-	dictionaries "github.com/camb-ai/cambai-go-sdk/dictionaries"
-	dub "github.com/camb-ai/cambai-go-sdk/dub"
-	folders "github.com/camb-ai/cambai-go-sdk/folders"
-	languages "github.com/camb-ai/cambai-go-sdk/languages"
-	option "github.com/camb-ai/cambai-go-sdk/option"
-	projectsetup "github.com/camb-ai/cambai-go-sdk/projectsetup"
-	story "github.com/camb-ai/cambai-go-sdk/story"
-	streaming "github.com/camb-ai/cambai-go-sdk/streaming"
-	texttoaudio "github.com/camb-ai/cambai-go-sdk/texttoaudio"
-	texttospeech "github.com/camb-ai/cambai-go-sdk/texttospeech"
-	texttovoice "github.com/camb-ai/cambai-go-sdk/texttovoice"
-	transcription "github.com/camb-ai/cambai-go-sdk/transcription"
-	translatedstory "github.com/camb-ai/cambai-go-sdk/translatedstory"
-	translatedtts "github.com/camb-ai/cambai-go-sdk/translatedtts"
-	translation "github.com/camb-ai/cambai-go-sdk/translation"
-	voicecloning "github.com/camb-ai/cambai-go-sdk/voicecloning"
 	http "net/http"
+	audioseparation "sdk/audioseparation"
+	core "sdk/core"
+	deprecatedstreaming "sdk/deprecatedstreaming"
+	dictionaries "sdk/dictionaries"
+	dub "sdk/dub"
+	folders "sdk/folders"
+	languages "sdk/languages"
+	option "sdk/option"
+	projectsetup "sdk/projectsetup"
+	story "sdk/story"
+	streaming "sdk/streaming"
+	texttoaudio "sdk/texttoaudio"
+	texttospeech "sdk/texttospeech"
+	texttovoice "sdk/texttovoice"
+	transcription "sdk/transcription"
+	translatedstory "sdk/translatedstory"
+	translatedtts "sdk/translatedtts"
+	translation "sdk/translation"
+	voicecloning "sdk/voicecloning"
 )
 
 type Client struct {
@@ -94,7 +94,7 @@ func (c *Client) GetSwaggerDocsDocsGet(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "docs"
+	endpointURL := baseURL + "/docs"
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 
@@ -102,12 +102,14 @@ func (c *Client) GetSwaggerDocsDocsGet(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:         endpointURL,
-			Method:      http.MethodGet,
-			MaxAttempts: options.MaxAttempts,
-			Headers:     headers,
-			Client:      options.HTTPClient,
-			Response:    &response,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
 		},
 	); err != nil {
 		return nil, err
@@ -128,7 +130,7 @@ func (c *Client) GetRedocDocsRedocsGet(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "redocs"
+	endpointURL := baseURL + "/redocs"
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 
@@ -136,12 +138,14 @@ func (c *Client) GetRedocDocsRedocsGet(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:         endpointURL,
-			Method:      http.MethodGet,
-			MaxAttempts: options.MaxAttempts,
-			Headers:     headers,
-			Client:      options.HTTPClient,
-			Response:    &response,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
 		},
 	); err != nil {
 		return nil, err
@@ -162,7 +166,7 @@ func (c *Client) GetOpenapiSchemaOpenapiJSONGet(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "openapi.json"
+	endpointURL := baseURL + "/openapi.json"
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 
@@ -170,12 +174,14 @@ func (c *Client) GetOpenapiSchemaOpenapiJSONGet(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:         endpointURL,
-			Method:      http.MethodGet,
-			MaxAttempts: options.MaxAttempts,
-			Headers:     headers,
-			Client:      options.HTTPClient,
-			Response:    &response,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
 		},
 	); err != nil {
 		return nil, err

@@ -7,12 +7,11 @@ import (
 	context "context"
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -66,9 +65,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 //	    - 413: If uploaded file exceeds size limit
 func (c *Client) CreateProject(
 	ctx context.Context,
-	request *cambaigosdk.CreateProjectSetupRequestPayload,
+	request *sdk.CreateProjectSetupRequestPayload,
 	opts ...option.RequestOption,
-) (*cambaigosdk.CreateProjectSetupOut, error) {
+) (*sdk.CreateProjectSetupOut, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -78,7 +77,7 @@ func (c *Client) CreateProject(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "project-setup"
+	endpointURL := baseURL + "/project-setup"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -89,6 +88,7 @@ func (c *Client) CreateProject(
 	}
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -99,7 +99,7 @@ func (c *Client) CreateProject(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -109,18 +109,20 @@ func (c *Client) CreateProject(
 		return apiError
 	}
 
-	var response *cambaigosdk.CreateProjectSetupOut
+	var response *sdk.CreateProjectSetupOut
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -131,9 +133,9 @@ func (c *Client) CreateProject(
 func (c *Client) CreateProjectSetupTaskStatus(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.CreateProjectSetupTaskStatusProjectSetupTaskIDGetRequest,
+	request *sdk.CreateProjectSetupTaskStatusProjectSetupTaskIDGetRequest,
 	opts ...option.RequestOption,
-) ([]*cambaigosdk.GetCreateProjectSetupResponse, error) {
+) ([]*sdk.GetCreateProjectSetupResponse, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -143,7 +145,7 @@ func (c *Client) CreateProjectSetupTaskStatus(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"project-setup/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/project-setup/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -164,7 +166,7 @@ func (c *Client) CreateProjectSetupTaskStatus(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -174,17 +176,19 @@ func (c *Client) CreateProjectSetupTaskStatus(
 		return apiError
 	}
 
-	var response []*cambaigosdk.GetCreateProjectSetupResponse
+	var response []*sdk.GetCreateProjectSetupResponse
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -221,9 +225,9 @@ func (c *Client) CreateProjectSetupTaskStatus(
 func (c *Client) GetProjectSetupResult(
 	ctx context.Context,
 	runID *int,
-	request *cambaigosdk.GetProjectSetupResultProjectSetupResultRunIDGetRequest,
+	request *sdk.GetProjectSetupResultProjectSetupResultRunIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.GetCreateProjectSetupResponse, error) {
+) (*sdk.GetCreateProjectSetupResponse, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -233,7 +237,7 @@ func (c *Client) GetProjectSetupResult(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"project-setup-result/%v", runID)
+	endpointURL := core.EncodeURL(baseURL+"/project-setup-result/%v", runID)
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
 
@@ -246,7 +250,7 @@ func (c *Client) GetProjectSetupResult(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -256,7 +260,7 @@ func (c *Client) GetProjectSetupResult(
 		return apiError
 	}
 
-	var response *cambaigosdk.GetCreateProjectSetupResponse
+	var response *sdk.GetCreateProjectSetupResponse
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
@@ -264,6 +268,8 @@ func (c *Client) GetProjectSetupResult(
 			Method:             http.MethodGet,
 			MaxAttempts:        options.MaxAttempts,
 			Headers:            headers,
+			BodyProperties:     options.BodyProperties,
+			QueryParameters:    options.QueryParameters,
 			Client:             options.HTTPClient,
 			Response:           &response,
 			ResponseIsOptional: true,
@@ -277,9 +283,9 @@ func (c *Client) GetProjectSetupResult(
 
 func (c *Client) GetProjectSetupRunsResults(
 	ctx context.Context,
-	request *cambaigosdk.GetProjectSetupRunsResultsProjectSetupResultsPostRequest,
+	request *sdk.GetProjectSetupRunsResultsProjectSetupResultsPostRequest,
 	opts ...option.RequestOption,
-) ([]*cambaigosdk.GetCreateProjectSetupResponse, error) {
+) ([]*sdk.GetCreateProjectSetupResponse, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -289,7 +295,7 @@ func (c *Client) GetProjectSetupRunsResults(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "project-setup-results"
+	endpointURL := baseURL + "/project-setup-results"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -300,6 +306,7 @@ func (c *Client) GetProjectSetupRunsResults(
 	}
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -310,7 +317,7 @@ func (c *Client) GetProjectSetupRunsResults(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -320,18 +327,20 @@ func (c *Client) GetProjectSetupRunsResults(
 		return apiError
 	}
 
-	var response []*cambaigosdk.GetCreateProjectSetupResponse
+	var response []*sdk.GetCreateProjectSetupResponse
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

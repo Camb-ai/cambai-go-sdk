@@ -8,11 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -37,9 +37,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) CreateTextToAudio(
 	ctx context.Context,
-	request *cambaigosdk.CreateTextToAudioRequestPayload,
+	request *sdk.CreateTextToAudioRequestPayload,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineCallResult, error) {
+) (*sdk.OrchestratorPipelineCallResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -49,7 +49,7 @@ func (c *Client) CreateTextToAudio(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "text-to-sound"
+	endpointURL := baseURL + "/text-to-sound"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -63,6 +63,7 @@ func (c *Client) CreateTextToAudio(
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -73,7 +74,7 @@ func (c *Client) CreateTextToAudio(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -83,18 +84,20 @@ func (c *Client) CreateTextToAudio(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineCallResult
+	var response *sdk.OrchestratorPipelineCallResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -105,9 +108,9 @@ func (c *Client) CreateTextToAudio(
 func (c *Client) GetTextToAudioStatus(
 	ctx context.Context,
 	taskID string,
-	request *cambaigosdk.GetTextToAudioStatusTextToSoundTaskIDGetRequest,
+	request *sdk.GetTextToAudioStatusTextToSoundTaskIDGetRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.OrchestratorPipelineResult, error) {
+) (*sdk.OrchestratorPipelineResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -117,7 +120,7 @@ func (c *Client) GetTextToAudioStatus(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"text-to-sound/%v", taskID)
+	endpointURL := core.EncodeURL(baseURL+"/text-to-sound/%v", taskID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -138,7 +141,7 @@ func (c *Client) GetTextToAudioStatus(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -148,17 +151,19 @@ func (c *Client) GetTextToAudioStatus(
 		return apiError
 	}
 
-	var response *cambaigosdk.OrchestratorPipelineResult
+	var response *sdk.OrchestratorPipelineResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -197,7 +202,7 @@ func (c *Client) GetTextToAudioStatus(
 func (c *Client) GetTextToAudioResult(
 	ctx context.Context,
 	runID *int,
-	request *cambaigosdk.GetTextToAudioResultTextToSoundResultRunIDGetRequest,
+	request *sdk.GetTextToAudioResultTextToSoundResultRunIDGetRequest,
 	opts ...option.RequestOption,
 ) (io.Reader, error) {
 	options := core.NewRequestOptions(opts...)
@@ -209,7 +214,7 @@ func (c *Client) GetTextToAudioResult(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"text-to-sound-result/%v", runID)
+	endpointURL := core.EncodeURL(baseURL+"/text-to-sound-result/%v", runID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -225,12 +230,14 @@ func (c *Client) GetTextToAudioResult(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:         endpointURL,
-			Method:      http.MethodGet,
-			MaxAttempts: options.MaxAttempts,
-			Headers:     headers,
-			Client:      options.HTTPClient,
-			Response:    response,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        response,
 		},
 	); err != nil {
 		return nil, err
@@ -240,9 +247,9 @@ func (c *Client) GetTextToAudioResult(
 
 func (c *Client) GetTextToSoundResults(
 	ctx context.Context,
-	request *cambaigosdk.GetTextToSoundResultsTextToSoundResultsPostRequest,
+	request *sdk.GetTextToSoundResultsTextToSoundResultsPostRequest,
 	opts ...option.RequestOption,
-) (map[string]*cambaigosdk.TextToAudioResult, error) {
+) (map[string]*sdk.TextToAudioResult, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -252,7 +259,7 @@ func (c *Client) GetTextToSoundResults(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "text-to-sound-results"
+	endpointURL := baseURL + "/text-to-sound-results"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -266,6 +273,7 @@ func (c *Client) GetTextToSoundResults(
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -276,7 +284,7 @@ func (c *Client) GetTextToSoundResults(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -286,18 +294,20 @@ func (c *Client) GetTextToSoundResults(
 		return apiError
 	}
 
-	var response map[string]*cambaigosdk.TextToAudioResult
+	var response map[string]*sdk.TextToAudioResult
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

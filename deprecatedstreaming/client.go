@@ -8,11 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	cambaigosdk "github.com/camb-ai/cambai-go-sdk"
-	core "github.com/camb-ai/cambai-go-sdk/core"
-	option "github.com/camb-ai/cambai-go-sdk/option"
 	io "io"
 	http "net/http"
+	sdk "sdk"
+	core "sdk/core"
+	option "sdk/option"
 )
 
 type Client struct {
@@ -37,9 +37,9 @@ func NewClient(opts ...option.RequestOption) *Client {
 
 func (c *Client) CreateStream(
 	ctx context.Context,
-	request *cambaigosdk.CreateStreamRequestPayload,
+	request *sdk.CreateStreamRequestPayload,
 	opts ...option.RequestOption,
-) (*cambaigosdk.CreateStreamOut, error) {
+) (*sdk.CreateStreamOut, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -49,9 +49,10 @@ func (c *Client) CreateStream(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "v1/stream"
+	endpointURL := baseURL + "/v1/stream"
 
 	headers := core.MergeHeaders(c.header.Clone(), options.ToHeader())
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -62,7 +63,7 @@ func (c *Client) CreateStream(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -72,18 +73,20 @@ func (c *Client) CreateStream(
 		return apiError
 	}
 
-	var response *cambaigosdk.CreateStreamOut
+	var response *sdk.CreateStreamOut
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -94,7 +97,7 @@ func (c *Client) CreateStream(
 func (c *Client) GetStreamResult(
 	ctx context.Context,
 	streamID int,
-	request *cambaigosdk.GetStreamResultV1StreamStreamIDGetRequest,
+	request *sdk.GetStreamResultV1StreamStreamIDGetRequest,
 	opts ...option.RequestOption,
 ) (map[string]interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -106,7 +109,7 @@ func (c *Client) GetStreamResult(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"v1/stream/%v", streamID)
+	endpointURL := core.EncodeURL(baseURL+"/v1/stream/%v", streamID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -127,7 +130,7 @@ func (c *Client) GetStreamResult(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -141,13 +144,15 @@ func (c *Client) GetStreamResult(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -158,7 +163,7 @@ func (c *Client) GetStreamResult(
 func (c *Client) StopStream(
 	ctx context.Context,
 	streamID int,
-	request *cambaigosdk.StopStreamV1StreamStreamIDStopGetRequest,
+	request *sdk.StopStreamV1StreamStreamIDStopGetRequest,
 	opts ...option.RequestOption,
 ) (map[string]interface{}, error) {
 	options := core.NewRequestOptions(opts...)
@@ -170,7 +175,7 @@ func (c *Client) StopStream(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := fmt.Sprintf(baseURL+"/"+"v1/stream/%v/stop", streamID)
+	endpointURL := core.EncodeURL(baseURL+"/v1/stream/%v/stop", streamID)
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -191,7 +196,7 @@ func (c *Client) StopStream(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -205,13 +210,15 @@ func (c *Client) StopStream(
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodGet,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err
@@ -221,9 +228,9 @@ func (c *Client) StopStream(
 
 func (c *Client) GetProbeStream(
 	ctx context.Context,
-	request *cambaigosdk.GetProbeStreamV1StreamProbePostRequest,
+	request *sdk.GetProbeStreamV1StreamProbePostRequest,
 	opts ...option.RequestOption,
-) (*cambaigosdk.GetProbeStreamOut, error) {
+) (*sdk.GetProbeStreamOut, error) {
 	options := core.NewRequestOptions(opts...)
 
 	baseURL := "https://client.camb.ai/apis"
@@ -233,7 +240,7 @@ func (c *Client) GetProbeStream(
 	if options.BaseURL != "" {
 		baseURL = options.BaseURL
 	}
-	endpointURL := baseURL + "/" + "v1/stream/probe"
+	endpointURL := baseURL + "/v1/stream/probe"
 
 	queryParams, err := core.QueryValues(request)
 	if err != nil {
@@ -247,6 +254,7 @@ func (c *Client) GetProbeStream(
 	if request.Traceparent != nil {
 		headers.Add("traceparent", fmt.Sprintf("%v", *request.Traceparent))
 	}
+	headers.Set("Content-Type", "application/json")
 
 	errorDecoder := func(statusCode int, body io.Reader) error {
 		raw, err := io.ReadAll(body)
@@ -257,7 +265,7 @@ func (c *Client) GetProbeStream(
 		decoder := json.NewDecoder(bytes.NewReader(raw))
 		switch statusCode {
 		case 422:
-			value := new(cambaigosdk.UnprocessableEntityError)
+			value := new(sdk.UnprocessableEntityError)
 			value.APIError = apiError
 			if err := decoder.Decode(value); err != nil {
 				return apiError
@@ -267,18 +275,20 @@ func (c *Client) GetProbeStream(
 		return apiError
 	}
 
-	var response *cambaigosdk.GetProbeStreamOut
+	var response *sdk.GetProbeStreamOut
 	if err := c.caller.Call(
 		ctx,
 		&core.CallParams{
-			URL:          endpointURL,
-			Method:       http.MethodPost,
-			MaxAttempts:  options.MaxAttempts,
-			Headers:      headers,
-			Client:       options.HTTPClient,
-			Request:      request,
-			Response:     &response,
-			ErrorDecoder: errorDecoder,
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			MaxAttempts:     options.MaxAttempts,
+			Headers:         headers,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    errorDecoder,
 		},
 	); err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package cambai
+package api
 
 import (
 	"time"
